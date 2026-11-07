@@ -14,7 +14,7 @@ public class VentanaLogin extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        metodosLogin.cargarPerfiles(jcbxPerfil);
+        metodosLogin.configurarCampos(jtxtUsuario, jtxtClave, jchkMostrarClave);
 
         getRootPane().setDefaultButton(jbtnIngresar);
     }
@@ -31,10 +31,9 @@ public class VentanaLogin extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         jtxtUsuario = new javax.swing.JTextField();
         jtxtClave = new javax.swing.JPasswordField();
-        jcbxPerfil = new javax.swing.JComboBox<>();
+        jchkMostrarClave = new javax.swing.JCheckBox();
         jbtnIngresar = new javax.swing.JButton();
         jbtnSalir = new javax.swing.JButton();
 
@@ -49,12 +48,15 @@ public class VentanaLogin extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel3.setText("Contraseña:");
 
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel4.setText("Perfil:");
-
-        jcbxPerfil.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jchkMostrarClave.setText("Mostrar contraseña");
+        jchkMostrarClave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jchkMostrarClaveActionPerformed(evt);
+            }
+        });
 
         jbtnIngresar.setText("Ingresar");
+        jbtnIngresar.setPreferredSize(new java.awt.Dimension(112, 30));
         jbtnIngresar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jbtnIngresarActionPerformed(evt);
@@ -81,17 +83,16 @@ public class VentanaLogin extends javax.swing.JFrame {
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4))
+                            .addComponent(jLabel3))
                         .addGap(25, 25, 25)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jbtnIngresar)
+                                .addComponent(jbtnIngresar, 112, 112, 112)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
                                 .addComponent(jbtnSalir))
                             .addComponent(jtxtUsuario)
                             .addComponent(jtxtClave)
-                            .addComponent(jcbxPerfil, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jchkMostrarClave, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap(80, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -110,27 +111,28 @@ public class VentanaLogin extends javax.swing.JFrame {
                     .addComponent(jtxtClave, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(jcbxPerfil, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jchkMostrarClave))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jbtnIngresar)
                     .addComponent(jbtnSalir))
-                .addContainerGap(119, Short.MAX_VALUE))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void jbtnIngresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnIngresarActionPerformed
-        // TODO add your handling code here:
-        metodosLogin.ingresar(jtxtUsuario, jtxtClave, jcbxPerfil, this);
+        metodosLogin.ingresar(jtxtUsuario, jtxtClave, jbtnIngresar, jchkMostrarClave, this);
     }//GEN-LAST:event_jbtnIngresarActionPerformed
 
     private void jbtnSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnSalirActionPerformed
-        // TODO add your handling code here:
         metodosLogin.salir(this);
     }//GEN-LAST:event_jbtnSalirActionPerformed
+
+    private void jchkMostrarClaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jchkMostrarClaveActionPerformed
+        metodosLogin.mostrarClave(jtxtClave, jchkMostrarClave);
+    }//GEN-LAST:event_jchkMostrarClaveActionPerformed
 
     /**
      * @param args the command line arguments
@@ -171,10 +173,9 @@ public class VentanaLogin extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JButton jbtnIngresar;
     private javax.swing.JButton jbtnSalir;
-    private javax.swing.JComboBox<String> jcbxPerfil;
+    private javax.swing.JCheckBox jchkMostrarClave;
     private javax.swing.JPasswordField jtxtClave;
     private javax.swing.JTextField jtxtUsuario;
     // End of variables declaration//GEN-END:variables
