@@ -11,6 +11,7 @@ package sistemaasistenciafisei;
 public class VentanaFISEI extends javax.swing.JFrame {
     
     MetodosEstudiante metodos = new MetodosEstudiante();
+    MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     
     /**
      * Creates new form VentanaFISEI
@@ -19,7 +20,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         metodos.cargarTabla(jtblEstudiantes);
-        
+        metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
     }
 
     /**
@@ -211,11 +212,27 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Matriculacion", jPanel1);
 
-        jcbxParcial.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jcbxParcial.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Parcial 1", "Parcial 2" }));
+        jcbxParcial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jcbxParcialActionPerformed(evt);
+            }
+        });
 
-        jcbxSesion.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jcbxSesion.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "4", "5" }));
+        jcbxSesion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jcbxSesionActionPerformed(evt);
+            }
+        });
 
         jLabel5.setText("\"Acercar Llavero\"");
+
+        jtxtLectorRfid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jtxtLectorRfidActionPerformed(evt);
+            }
+        });
 
         jLabel6.setText("Seleccione Parcial");
 
@@ -390,6 +407,26 @@ public class VentanaFISEI extends javax.swing.JFrame {
         // TODO add your handling code here:
         metodos.seleccionarFila(jtblEstudiantes, jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
     }//GEN-LAST:event_jtblEstudiantesMouseClicked
+
+    private void jcbxParcialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxParcialActionPerformed
+        String parcial = jcbxParcial.getSelectedItem().toString();
+        int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
+        metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+    }//GEN-LAST:event_jcbxParcialActionPerformed
+
+    private void jcbxSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxSesionActionPerformed
+        String parcial = jcbxParcial.getSelectedItem().toString();
+        int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
+        metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+    }//GEN-LAST:event_jcbxSesionActionPerformed
+
+    private void jtxtLectorRfidActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtLectorRfidActionPerformed
+        String parcial = jcbxParcial.getSelectedItem().toString();
+        int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
+        metodosAsistencia.registrarMarcacion(jtxtLectorRfid.getText(), parcial, sesion, jtblMarcacionesSesion, jlblMensajeAsistencia);
+        jtxtLectorRfid.setText("");
+        jtxtLectorRfid.requestFocus();
+    }//GEN-LAST:event_jtxtLectorRfidActionPerformed
 
     /**
      * @param args the command line arguments
