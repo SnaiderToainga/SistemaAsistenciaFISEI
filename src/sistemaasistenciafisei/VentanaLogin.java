@@ -9,16 +9,12 @@ public class VentanaLogin extends javax.swing.JFrame {
      */
     public VentanaLogin() {
         initComponents();
-
-        setTitle("Ingreso al sistema - FISEI");
-        setLocationRelativeTo(null);
-        setResizable(false);
-
+        this.setLocationRelativeTo(null);
+        // Configura los campos y coloca el cursor en el usuario
         metodosLogin.configurarCampos(jtxtUsuario, jtxtClave, jchkMostrarClave);
-
-        getRootPane().setDefaultButton(jbtnIngresar);
+        getRootPane().setDefaultButton(jbtnIngresar); // Presionar Enter ejecuta el botón
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
