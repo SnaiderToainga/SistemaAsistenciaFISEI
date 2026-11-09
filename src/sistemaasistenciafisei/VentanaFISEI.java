@@ -12,6 +12,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     
     MetodosEstudiante metodos = new MetodosEstudiante();
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
+    MetodosReporte metodosReporte = new MetodosReporte();
     
     /**
      * Creates new form VentanaFISEI
@@ -21,6 +22,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
+        metodosReporte.calcularConsolidado("Parcial 1", jtblReporteFinal);
     }
 
     /**
@@ -297,11 +299,21 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Asistencia RFID", jPanel2);
 
-        jcbxParcialReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jcbxParcialReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Parcial 1", "Parcial 2" }));
+        jcbxParcialReporte.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jcbxParcialReporteActionPerformed(evt);
+            }
+        });
 
         jLabel8.setText("Seleccione el parcial");
 
         jbtnCalcularReporte.setText("Reporte");
+        jbtnCalcularReporte.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtnCalcularReporteActionPerformed(evt);
+            }
+        });
 
         jbtnImprimirJasper.setText("Imprimir");
         jbtnImprimirJasper.addActionListener(new java.awt.event.ActionListener() {
@@ -312,13 +324,13 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
         jtblReporteFinal.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Cédula", "Estudiante", "Asistencia", "Porcentaje", "Estado"
             }
         ));
         jScrollPane4.setViewportView(jtblReporteFinal);
@@ -380,8 +392,19 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jbtnEliminarEstudianteActionPerformed
 
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
-        // TODO add your handling code here:
+        String parcial = jcbxParcialReporte.getSelectedItem().toString();
+        metodosReporte.exportarPdfJasper(parcial);
     }//GEN-LAST:event_jbtnImprimirJasperActionPerformed
+
+    private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        String parcial = jcbxParcialReporte.getSelectedItem().toString();
+        metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+    }
+
+    private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        String parcial = jcbxParcialReporte.getSelectedItem().toString();
+        metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+    }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
         // TODO add your handling code here:
