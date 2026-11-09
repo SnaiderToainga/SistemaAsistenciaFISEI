@@ -14,17 +14,42 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     MetodosReporte metodosReporte = new MetodosReporte();
     
+    private String rolUsuario;// para activar o desactivar los campos dependiendo el rol
+     
+    public VentanaFISEI() {
+        this("Administrador"); // Entra por defecto con todos los permisos
+    }
+    
     /**
      * Creates new form VentanaFISEI
      */
-    public VentanaFISEI() {
+    public VentanaFISEI(String rol) {
         initComponents();
+        this.rolUsuario = rol;
+        this.setLocationRelativeTo(null);
         this.setLocationRelativeTo(null);
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
         metodosReporte.calcularConsolidado("Parcial 1", jtblReporteFinal);
+        aplicarPermisosPorRol();
     }
-
+    
+    private void aplicarPermisosPorRol() {
+        if (rolUsuario != null && rolUsuario.equalsIgnoreCase("Docente")) {
+            // El Docente no tiene acceso a matricular ni eliminar estudiantes
+            jTabbedPane1.setEnabledAt(0, false); 
+            // Lo manda directo a la pestaña de pasar asistencia con el llavero RFID
+            jTabbedPane1.setSelectedIndex(1);    
+            this.setTitle("Sistema Asistencia FISEI - [Perfil: Docente]");
+        } else {
+            // Administrador: acceso total a las 3 pestañas
+            jTabbedPane1.setEnabledAt(0, true);
+            jTabbedPane1.setSelectedIndex(0);
+            this.setTitle("Sistema Asistencia FISEI - [Perfil: Administrador]");
+        }
+    }
+   
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

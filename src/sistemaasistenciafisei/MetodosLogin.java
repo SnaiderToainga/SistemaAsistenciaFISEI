@@ -124,7 +124,7 @@ public class MetodosLogin {
                         if (!ventanaLogin.isDisplayable()) {
                             return;
                         }
-                        VentanaFISEI principal = new VentanaFISEI();
+                        VentanaFISEI principal = new VentanaFISEI(getPerfilUsuario());
                         principal.setVisible(true);
                         ventanaLogin.dispose();
                     } else {
