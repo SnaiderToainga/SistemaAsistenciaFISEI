@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" 
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" 
+              name="ReporteEstudiantes" 
+              pageWidth="595" pageHeight="842" 
+              columnWidth="535" 
+              leftMargin="30" rightMargin="30" 
+              topMargin="30" bottomMargin="30"
+              uuid="b4e1f7a2-9c3d-4e5f-a6b7-8c9d0e1f2a3b">
+    <property name="ireport.zoom" value="1.0"/>
+    <property name="ireport.x" value="0"/>
+    <property name="ireport.y" value="0"/>
+    <parameter name="parcial" class="java.lang.String">
+        <defaultValueExpression><![CDATA["Parcial 1"]]></defaultValueExpression>
+    </parameter>
+    <queryString>
+        <![CDATA[SELECT e.cedula, 
+       CONCAT(e.nombres, ' ', e.apellidos) AS nombre_completo,
+       CONCAT(COUNT(a.id), ' / 5') AS asistencias_str,
+       CONCAT(ROUND((COUNT(a.id) / 5.0) * 100, 1), '%') AS porcentaje_str,
+       CASE 
+           WHEN ((COUNT(a.id) / 5.0) * 100) >= 80 THEN 'APROBADO'
+           WHEN ((COUNT(a.id) / 5.0) * 100) >= 70 THEN 'EN RIESGO'
+           ELSE 'REPROBADO'
+       END AS estado_academico
+FROM estudiantes e
+LEFT JOIN asistencias a ON e.id = a.id_estudiante AND a.parcial = $P{parcial} AND a.estado = 'PRESENTE'
+GROUP BY e.id, e.cedula, e.nombres, e.apellidos
+ORDER BY e.apellidos ASC;]]>
+    </queryString>
+    <field name="cedula" class="java.lang.String"/>
+    <field name="nombre_completo" class="java.lang.String"/>
+    <field name="asistencias_str" class="java.lang.String"/>
+    <field name="porcentaje_str" class="java.lang.String"/>
+    <field name="estado_academico" class="java.lang.String"/>
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+    <title>
+        <band height="95" splitType="Stretch">
+            <rectangle>
+                <reportElement x="0" y="0" width="535" height="90" backcolor="#990000" uuid="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="0" y="8" width="535" height="22" forecolor="#FFFFFF" uuid="d1e2f3a4-b5c6-7a8b-9c0d-1e2f3a4b5c6e"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="14" isBold="true"/>
+                </textElement>
+                <text><![CDATA[UNIVERSIDAD TÉCNICA DE AMBATO]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="30" width="535" height="18" forecolor="#FFFFFF" uuid="e2f3a4b5-c6d7-8e9f-0a1b-2c3d4e5f6a7b"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[FACULTAD DE INGENIERÍA EN SISTEMAS, ELECTRÓNICA E INDUSTRIAL]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="48" width="535" height="16" forecolor="#FFFFFF" uuid="f3a4b5c6-d7e8-9f0a-1b2c-3d4e5f6a7b8c"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="false"/>
+                </textElement>
+                <text><![CDATA[CARRERA DE INGENIERÍA DE SOFTWARE | CONTROL DE ASISTENCIA RFID]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="66" width="535" height="20" forecolor="#FFD700" uuid="0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="11" isBold="true"/>
+                </textElement>
+                <text><![CDATA[CONSOLIDADO DE ASISTENCIAS Y ESTADO ACADÉMICO]]></text>
+            </staticText>
+        </band>
+    </title>
+    <pageHeader>
+        <band height="32" splitType="Stretch">
+            <staticText>
+                <reportElement x="0" y="6" width="60" height="20" uuid="1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Periodo:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="60" y="6" width="160" height="20" forecolor="#990000" uuid="2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="10" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{parcial}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="320" y="6" width="95" height="20" uuid="3d4e5f6a-7b8c-9d0e-1f2a-3b4c5d6e7f8a"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="false"/>
+                </textElement>
+                <text><![CDATA[Fecha de Emisión:]]></text>
+            </staticText>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="420" y="6" width="115" height="20" uuid="4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="28" width="535" height="1" forecolor="#CCCCCC" uuid="5f6a7b8c-9d0e-1f2a-3b4c-5d6e7f8a9b0c"/>
+            </line>
+        </band>
+    </pageHeader>
+    <columnHeader>
+        <band height="24" splitType="Stretch">
+            <rectangle>
+                <reportElement x="0" y="0" width="535" height="24" backcolor="#F0F0F0" uuid="6a7b8c9d-0e1f-2a3b-4c5d-6e7f8a9b0c1d"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="0" width="85" height="24" uuid="7b8c9d0e-1f2a-3b4c-5d6e-7f8a9b0c1d2e"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[CÉDULA]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="95" y="0" width="195" height="24" uuid="8c9d0e1f-2a3b-4c5d-6e7f-8a9b0c1d2e3f"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[ESTUDIANTE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="295" y="0" width="70" height="24" uuid="9d0e1f2a-3b4c-5d6e-7f8a-9b0c1d2e3f4a"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[ASISTENCIA]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="370" y="0" width="75" height="24" uuid="0e1f2a3b-4c5d-6e7f-8a9b-0c1d2e3f4a5b"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PORCENTAJE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="450" y="0" width="80" height="24" uuid="1f2a3b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[ESTADO]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    <detail>
+        <band height="22" splitType="Stretch">
+            <textField>
+                <reportElement x="5" y="1" width="85" height="19" uuid="2a3b4c5d-6e7f-8a9b-0c1d-2e3f4a5b6c7d"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{cedula}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="95" y="1" width="195" height="19" uuid="3b4c5d6e-7f8a-9b0c-1d2e-3f4a5b6c7d8e"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{nombre_completo}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="295" y="1" width="70" height="19" uuid="4c5d6e7f-8a9b-0c1d-2e3f-4a5b6c7d8e9f"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{asistencias_str}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="370" y="1" width="75" height="19" uuid="5d6e7f8a-9b0c-1d2e-3f4a-5b6c7d8e9f0a"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{porcentaje_str}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="450" y="1" width="80" height="19" uuid="6e7f8a9b-0c1d-2e3f-4a5b-6c7d8e9f0a1b"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{estado_academico}]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="21" width="535" height="1" forecolor="#EEEEEE" uuid="7f8a9b0c-1d2e-3f4a-5b6c-7d8e9f0a1b2c"/>
+            </line>
+        </band>
+    </detail>
+    <pageFooter>
+        <band height="35" splitType="Stretch">
+            <line>
+                <reportElement x="0" y="4" width="535" height="1" forecolor="#CCCCCC" uuid="8a9b0c1d-2e3f-4a5b-6c7d-8e9f0a1b2c3d"/>
+            </line>
+            <staticText>
+                <reportElement x="0" y="10" width="380" height="18" forecolor="#666666" uuid="9b0c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Normativa UTA: APROBADO (>= 80%) | EN RIESGO (70% - 79%) | REPROBADO (< 70%)]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="400" y="10" width="135" height="18" forecolor="#666666" uuid="0c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+    <summary>
+        <band height="20" splitType="Stretch"/>
+    </summary>
+</jasperReport>
+
