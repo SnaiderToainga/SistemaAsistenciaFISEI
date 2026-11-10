@@ -14,9 +14,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     MetodosReporte metodosReporte = new MetodosReporte();
     private final MetodosLogin metodosLogin = new MetodosLogin();
-    
-    private String rolUsuario;// para activar o desactivar los campos dependiendo el rol
-     
+
     public VentanaFISEI() {
         this("Administrador"); // Entra por defecto con todos los permisos
     }
@@ -26,17 +24,15 @@ public class VentanaFISEI extends javax.swing.JFrame {
      */
     public VentanaFISEI(String rol) {
         initComponents();
-        this.rolUsuario = rol;
-        this.setLocationRelativeTo(null);
         this.setLocationRelativeTo(null);
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
         metodosReporte.calcularConsolidado("Parcial 1", jtblReporteFinal);
-        aplicarPermisosPorRol();
+        aplicarPermisosPorRol(rol);
     }
     
-    private void aplicarPermisosPorRol() {
-        if (rolUsuario != null && rolUsuario.equalsIgnoreCase("Docente")) {
+    private void aplicarPermisosPorRol(String rol) {
+        if ("Docente".equalsIgnoreCase(rol)) {
             // El Docente no tiene acceso a matricular ni eliminar estudiantes
             jTabbedPane1.setEnabledAt(0, false); 
             // Lo manda directo a la pestaña de pasar asistencia con el llavero RFID

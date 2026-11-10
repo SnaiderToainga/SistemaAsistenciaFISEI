@@ -21,21 +21,11 @@ import javax.swing.SwingWorker;
 public class MetodosLogin {
 
     private static final Logger LOG = Logger.getLogger(MetodosLogin.class.getName());
-    private String nombreUsuario;
-    private String perfilUsuario;
     private char caracterOculto = '*';
-    private SwingWorker<Boolean, Void> tareaIngreso;
+    private SwingWorker<UsuarioAutenticado, Void> tareaIngreso;
 
-    public boolean validarAcceso(String user, String pass) throws SQLException {
-        nombreUsuario = null;
-        perfilUsuario = null;
-
-        if (user == null || pass == null
-                || user.trim().isEmpty() || pass.isEmpty()) {
-            return false;
-        }
-
-        String sql = "SELECT id, nombre_completo, perfil FROM usuarios "
+    private UsuarioAutenticado autenticar(String usuario, String clave) throws SQLException {
+        String sql = "SELECT nombre_completo, perfil FROM usuarios "
                 + "WHERE usuario = ? AND clave = ?";
 
         try (Connection cn = new Conexion().conectar()) {
@@ -44,17 +34,18 @@ public class MetodosLogin {
             }
 
             try (PreparedStatement ps = cn.prepareStatement(sql)) {
-                ps.setString(1, user.trim());
-                ps.setString(2, pass);
+                ps.setString(1, usuario);
+                ps.setString(2, clave);
                 ps.setQueryTimeout(10);
 
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        nombreUsuario = rs.getString("nombre_completo");
-                        perfilUsuario = rs.getString("perfil");
-                        return true;
+                    if (!rs.next()) {
+                        return null;
                     }
-                    return false;
+
+                    String nombre = rs.getString("nombre_completo");
+                    String perfil = rs.getString("perfil");
+                    return new UsuarioAutenticado(nombre, perfil);
                 }
             }
         }
@@ -73,7 +64,7 @@ public class MetodosLogin {
     }
 
     public void ingresar(JTextField txtUsuario, JPasswordField txtClave,
-                         JButton btnIngresar, JCheckBox mostrarClave,
+                         JButton btnIngresar, JCheckBox chkMostrarClave,
                          JFrame ventanaLogin) {
         // Una sola consulta por intento, aunque se pulse Enter varias veces.
         if (tareaIngreso != null) {
@@ -99,38 +90,19 @@ public class MetodosLogin {
             return;
         }
 
-        cambiarEstado(true, txtUsuario, txtClave, btnIngresar, mostrarClave, ventanaLogin);
+        actualizarFormulario(true, txtUsuario, txtClave, btnIngresar, chkMostrarClave, ventanaLogin);
 
-        tareaIngreso = new SwingWorker<Boolean, Void>() {
+        tareaIngreso = new SwingWorker<>() {
             @Override
-            protected Boolean doInBackground() throws SQLException {
-                return validarAcceso(usuario, clave);
+            protected UsuarioAutenticado doInBackground() throws SQLException {
+                return autenticar(usuario, clave);
             }
 
             @Override
             protected void done() {
                 try {
-                    // Si se cerró el login, no abrir otra ventana al terminar.
-                    if (isCancelled() || !ventanaLogin.isDisplayable()) {
-                        return;
-                    }
-
-                    if (get()) {
-                        JOptionPane.showMessageDialog(ventanaLogin,
-                                "Bienvenido " + getNombreUsuario()
-                                        + "\nPerfil: " + getPerfilUsuario(),
-                                "Acceso correcto", JOptionPane.INFORMATION_MESSAGE);
-
-                        if (!ventanaLogin.isDisplayable()) {
-                            return;
-                        }
-                        VentanaFISEI principal = new VentanaFISEI(getPerfilUsuario());
-                        principal.setVisible(true);
-                        ventanaLogin.dispose();
-                    } else {
-                        JOptionPane.showMessageDialog(ventanaLogin,
-                                "Usuario o contraseña incorrectos.",
-                                "Acceso denegado", JOptionPane.WARNING_MESSAGE);
+                    if (!isCancelled() && ventanaLogin.isDisplayable()) {
+                        mostrarResultado(ventanaLogin, get());
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -138,31 +110,51 @@ public class MetodosLogin {
                 } catch (ExecutionException ex) {
                     informarError(ventanaLogin, ex.getCause());
                 } finally {
-                    txtClave.setText("");
-                    mostrarClave.setSelected(false);
-                    txtClave.setEchoChar(caracterOculto);
-                    cambiarEstado(false, txtUsuario, txtClave, btnIngresar,
-                            mostrarClave, ventanaLogin);
+                    actualizarFormulario(false, txtUsuario, txtClave, btnIngresar,
+                            chkMostrarClave, ventanaLogin);
                     tareaIngreso = null;
-                    if (ventanaLogin.isDisplayable()) {
-                        txtClave.requestFocusInWindow();
-                    }
                 }
             }
         };
         tareaIngreso.execute();
     }
 
-    private void cambiarEstado(boolean validando, JTextField txtUsuario,
-                               JPasswordField txtClave, JButton btnIngresar,
-                               JCheckBox mostrarClave, JFrame ventanaLogin) {
+    private void mostrarResultado(JFrame ventanaLogin, UsuarioAutenticado usuario) {
+        if (usuario == null) {
+            JOptionPane.showMessageDialog(ventanaLogin, "Usuario o contraseña incorrectos.",
+                    "Acceso denegado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JOptionPane.showMessageDialog(ventanaLogin,
+                "Bienvenido " + usuario.nombre() + "\nPerfil: " + usuario.perfil(),
+                "Acceso correcto", JOptionPane.INFORMATION_MESSAGE);
+
+        if (ventanaLogin.isDisplayable()) {
+            new VentanaFISEI(usuario.perfil()).setVisible(true);
+            ventanaLogin.dispose();
+        }
+    }
+
+    private void actualizarFormulario(boolean validando, JTextField txtUsuario,
+                                      JPasswordField txtClave, JButton btnIngresar,
+                                      JCheckBox chkMostrarClave, JFrame ventanaLogin) {
         txtUsuario.setEnabled(!validando);
         txtClave.setEnabled(!validando);
-        mostrarClave.setEnabled(!validando);
+        chkMostrarClave.setEnabled(!validando);
         btnIngresar.setEnabled(!validando);
         btnIngresar.setText(validando ? "Validando..." : "Ingresar");
         ventanaLogin.setCursor(Cursor.getPredefinedCursor(
                 validando ? Cursor.WAIT_CURSOR : Cursor.DEFAULT_CURSOR));
+
+        if (!validando) {
+            txtClave.setText("");
+            chkMostrarClave.setSelected(false);
+            mostrarClave(txtClave, chkMostrarClave);
+            if (ventanaLogin.isDisplayable()) {
+                txtClave.requestFocusInWindow();
+            }
+        }
     }
 
     private void informarError(JFrame ventanaLogin, Throwable error) {
@@ -196,11 +188,6 @@ public class MetodosLogin {
         ventanaLogin.dispose();
     }
 
-    public String getNombreUsuario() {
-        return nombreUsuario;
-    }
-
-    public String getPerfilUsuario() {
-        return perfilUsuario;
+    private record UsuarioAutenticado(String nombre, String perfil) {
     }
 }
