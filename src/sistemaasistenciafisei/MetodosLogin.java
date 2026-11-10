@@ -173,6 +173,22 @@ public class MetodosLogin {
                 "Error de conexión", JOptionPane.ERROR_MESSAGE);
     }
 
+    public void cerrarSesion(JFrame ventanaActual) {
+        int confirmacion = JOptionPane.showConfirmDialog(
+                ventanaActual,
+                "¿Desea cerrar la sesión actual?",
+                "Cerrar Sesión",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            ventanaActual.dispose();
+            VentanaLogin login = new VentanaLogin();
+            login.setVisible(true);
+        }
+    }
+
     public void salir(JFrame ventanaLogin) {
         if (tareaIngreso != null) {
             tareaIngreso.cancel(true);

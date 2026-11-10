@@ -13,6 +13,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosEstudiante metodos = new MetodosEstudiante();
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     MetodosReporte metodosReporte = new MetodosReporte();
+    private final MetodosLogin metodosLogin = new MetodosLogin();
     
     private String rolUsuario;// para activar o desactivar los campos dependiendo el rol
      
@@ -94,6 +95,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jbtnImprimirJasper = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         jtblReporteFinal = new javax.swing.JTable();
+        jbtnCerrarSesion = new javax.swing.JButton();
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -397,19 +399,37 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Reporte y Estado", jPanel3);
 
+        jbtnCerrarSesion.setText("Cerrar Sesión");
+        jbtnCerrarSesion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtnCerrarSesionActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
             .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 550, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jbtnCerrarSesion)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jbtnCerrarSesion)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane1))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jbtnCerrarSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnCerrarSesionActionPerformed
+        metodosLogin.cerrarSesion(this);
+    }//GEN-LAST:event_jbtnCerrarSesionActionPerformed
 
     private void jbtnEliminarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnEliminarEstudianteActionPerformed
         // TODO add your handling code here:
@@ -530,6 +550,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JButton jbtnCalcularReporte;
+    private javax.swing.JButton jbtnCerrarSesion;
     private javax.swing.JButton jbtnEliminarEstudiante;
     private javax.swing.JButton jbtnGuardarEstudiante;
     private javax.swing.JButton jbtnImprimirJasper;
