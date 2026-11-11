@@ -14,8 +14,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     MetodosReporte metodosReporte = new MetodosReporte();
     private final MetodosLogin metodosLogin = new MetodosLogin();
-    private int sesionesParcial1 = 5;
-    private int sesionesParcial2 = 5;
+    private final java.util.Map<String, Integer> sesionesPorCurso = new java.util.HashMap<>();
 
     public VentanaFISEI() {
         this("Administrador", 0, null); // Entra por defecto con todos los permisos
@@ -31,27 +30,35 @@ public class VentanaFISEI extends javax.swing.JFrame {
     public VentanaFISEI(String rol, int idMateriaDocente, String nombreMateria) {
         initComponents();
         this.setLocationRelativeTo(null);
-        sesionesParcial1 = metodosReporte.obtenerSesionesRegistradas("Parcial 1");
-        sesionesParcial2 = metodosReporte.obtenerSesionesRegistradas("Parcial 2");
-        cargarComboSesiones("Parcial 1", 1);
-        metodos.cargarTabla(jtblEstudiantes);
-        metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
-        metodosReporte.calcularConsolidado("Parcial 1", getTotalSesiones("Parcial 1"), jtblReporteFinal);
+        for (int idMat : new int[]{1, 2}) {
+            sesionesPorCurso.put(claveCurso(idMat, "Parcial 1"), metodosReporte.obtenerSesionesRegistradas("Parcial 1"));
+            sesionesPorCurso.put(claveCurso(idMat, "Parcial 2"), metodosReporte.obtenerSesionesRegistradas("Parcial 2"));
+        }
         botonesModoNuevo();
         configurarEventosExtra();
         aplicarPermisosPorRol(rol, idMateriaDocente, nombreMateria);
+
+        int idMatAsis = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
+        cargarComboSesiones(idMatAsis, "Parcial 1", 1);
+        metodos.cargarTabla(jtblEstudiantes);
+        metodosAsistencia.cargarMarcacionesSesion(idMatAsis, "Parcial 1", 1, jtblMarcacionesSesion);
+        metodosReporte.calcularConsolidado("Parcial 1", getTotalSesiones(1, "Parcial 1"), jtblReporteFinal);
+    }
+
+    private String claveCurso(int idMateria, String parcial) {
+        return idMateria + "-" + parcial;
     }
 
     private int getIdMateriaSeleccionada(javax.swing.JComboBox<String> combo) {
         return "Metodologías Ágiles".equals(combo.getSelectedItem()) ? 2 : 1;
     }
 
-    private int getTotalSesiones(String parcial) {
-        return "Parcial 2".equals(parcial) ? sesionesParcial2 : sesionesParcial1;
+    private int getTotalSesiones(int idMateria, String parcial) {
+        return sesionesPorCurso.getOrDefault(claveCurso(idMateria, parcial), 5);
     }
 
-    private void cargarComboSesiones(String parcial, int sesionSeleccionada) {
-        int total = getTotalSesiones(parcial);
+    private void cargarComboSesiones(int idMateria, String parcial, int sesionSeleccionada) {
+        int total = getTotalSesiones(idMateria, parcial);
         javax.swing.DefaultComboBoxModel<String> modelo = new javax.swing.DefaultComboBoxModel<>();
         for (int i = 1; i <= total; i++) {
             modelo.addElement(String.valueOf(i));
@@ -135,6 +142,14 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jtxtApellidos.addKeyListener(detectorEdicion);
         jtxtRfidMatricula.addKeyListener(detectorEdicion);
 
+        jcbxMateriaAsistencia.addActionListener(e -> {
+            int idMat = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
+            String parcial = jcbxParcial.getSelectedItem().toString();
+            cargarComboSesiones(idMat, parcial, 1);
+            metodosAsistencia.cargarMarcacionesSesion(idMat, parcial, 1, jtblMarcacionesSesion);
+            jtxtLectorRfid.requestFocusInWindow();
+        });
+
         // Al cambiar de pestaña, enfocar el lector RFID o refrescar la tabla de reportes
         jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
             @Override
@@ -143,8 +158,9 @@ public class VentanaFISEI extends javax.swing.JFrame {
                 if (pestana == 1) {
                     jtxtLectorRfid.requestFocusInWindow();
                 } else if (pestana == 2) {
+                    int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
                     String parcial = jcbxParcialReporte.getSelectedItem().toString();
-                    metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
+                    metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
                 }
             }
         });
@@ -600,19 +616,22 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jbtnEliminarEstudianteActionPerformed
 
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.exportarPdfJasper(parcial, getTotalSesiones(parcial));
+        metodosReporte.exportarPdfJasper(parcial, getTotalSesiones(idMat, parcial));
     }//GEN-LAST:event_jbtnImprimirJasperActionPerformed
 
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
+        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
         metodosReporte.mostrarResumen(parcial, jtblReporteFinal);
     }
 
     private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
+        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
     }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
@@ -667,25 +686,22 @@ public class VentanaFISEI extends javax.swing.JFrame {
             return;
         }
 
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
         String parcial = jcbxParcial.getSelectedItem().toString();
-        int nuevaSesion;
-        if ("Parcial 2".equals(parcial)) {
-            sesionesParcial2++;
-            nuevaSesion = sesionesParcial2;
-        } else {
-            sesionesParcial1++;
-            nuevaSesion = sesionesParcial1;
-        }
-        cargarComboSesiones(parcial, nuevaSesion);
-        metodosAsistencia.cargarMarcacionesSesion(parcial, nuevaSesion, jtblMarcacionesSesion);
+        int nuevaSesion = getTotalSesiones(idMat, parcial) + 1;
+        sesionesPorCurso.put(claveCurso(idMat, parcial), nuevaSesion);
+
+        cargarComboSesiones(idMat, parcial, nuevaSesion);
+        metodosAsistencia.cargarMarcacionesSesion(idMat, parcial, nuevaSesion, jtblMarcacionesSesion);
         jlblMensajeAsistencia.setText("Sesión " + nuevaSesion + " habilitada en " + parcial + ".");
         jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jbtnAgregarSesionActionPerformed
 
     private void jcbxParcialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxParcialActionPerformed
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
         String parcial = jcbxParcial.getSelectedItem().toString();
-        cargarComboSesiones(parcial, 1);
-        metodosAsistencia.cargarMarcacionesSesion(parcial, 1, jtblMarcacionesSesion);
+        cargarComboSesiones(idMat, parcial, 1);
+        metodosAsistencia.cargarMarcacionesSesion(idMat, parcial, 1, jtblMarcacionesSesion);
         jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jcbxParcialActionPerformed
 
@@ -693,16 +709,18 @@ public class VentanaFISEI extends javax.swing.JFrame {
         if (jcbxSesion.getSelectedItem() == null) {
             return;
         }
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
         String parcial = jcbxParcial.getSelectedItem().toString();
         int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
-        metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+        metodosAsistencia.cargarMarcacionesSesion(idMat, parcial, sesion, jtblMarcacionesSesion);
         jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jcbxSesionActionPerformed
 
     private void jtxtLectorRfidActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtLectorRfidActionPerformed
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
         String parcial = jcbxParcial.getSelectedItem().toString();
         int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
-        metodosAsistencia.registrarMarcacion(jtxtLectorRfid.getText(), parcial, sesion, jtblMarcacionesSesion, jlblMensajeAsistencia);
+        metodosAsistencia.registrarMarcacion(jtxtLectorRfid.getText(), idMat, parcial, sesion, jtblMarcacionesSesion, jlblMensajeAsistencia);
         jtxtLectorRfid.setText("");
         jtxtLectorRfid.requestFocus();
     }//GEN-LAST:event_jtxtLectorRfidActionPerformed
