@@ -66,6 +66,23 @@ public class MetodosEstudiante {
         txtCedula.requestFocus();
     }
 
+    private boolean validarCampos(String cedula, String nombres, String apellidos, String uid, JTextField txtCedula) {
+        if (cedula.isEmpty() || nombres.isEmpty() || apellidos.isEmpty() || uid.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Debe completar Cédula, Nombres, Apellidos y pasar el llavero.", "Atención", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        if (!cedula.matches("\\d{10}")) {
+            JOptionPane.showMessageDialog(null, "La cédula debe tener exactamente 10 dígitos numéricos.", "Atención", JOptionPane.WARNING_MESSAGE);
+            txtCedula.requestFocus();
+            return false;
+        }
+        if (!nombres.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+") || !apellidos.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
+            JOptionPane.showMessageDialog(null, "Nombres y Apellidos solo deben contener letras.", "Atención", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     // 3. Guardar un nuevo estudiante (Botón Guardar)
     public boolean guardar(JTextField txtCedula, JTextField txtNombre, JTextField txtApellidos, JTextField txtRfid, JTable tabla) {
         String cedula = txtCedula.getText().trim();
@@ -73,14 +90,7 @@ public class MetodosEstudiante {
         String apellidos = txtApellidos.getText().trim();
         String uid = txtRfid.getText().replaceAll("[^0-9]", "").trim();
 
-        if (cedula.isEmpty() || nombres.isEmpty() || apellidos.isEmpty() || uid.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Debe completar Cédula, Nombres, Apellidos y pasar el llavero.", "Atención", JOptionPane.WARNING_MESSAGE);
-            return false;
-        }
-
-        if (!cedula.matches("\\d{10}")) {
-            JOptionPane.showMessageDialog(null, "La cédula debe tener exactamente 10 dígitos numéricos.", "Atención", JOptionPane.WARNING_MESSAGE);
-            txtCedula.requestFocus();
+        if (!validarCampos(cedula, nombres, apellidos, uid, txtCedula)) {
             return false;
         }
 
@@ -128,14 +138,7 @@ public class MetodosEstudiante {
         String apellidos = txtApellidos.getText().trim();
         String uid = txtRfid.getText().replaceAll("[^0-9]", "").trim();
 
-        if (cedula.isEmpty() || nombres.isEmpty() || apellidos.isEmpty() || uid.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Todos los campos son requeridos.", "Atención", JOptionPane.WARNING_MESSAGE);
-            return false;
-        }
-
-        if (!cedula.matches("\\d{10}")) {
-            JOptionPane.showMessageDialog(null, "La cédula debe tener exactamente 10 dígitos numéricos.", "Atención", JOptionPane.WARNING_MESSAGE);
-            txtCedula.requestFocus();
+        if (!validarCampos(cedula, nombres, apellidos, uid, txtCedula)) {
             return false;
         }
 
@@ -193,6 +196,10 @@ public class MetodosEstudiante {
         String uid = txtRfid.getText().replaceAll("[^0-9]", "").trim();
         if (uid.isEmpty()) return;
 
+        boolean camposVacios = txtCedula.getText().trim().isEmpty()
+                && txtNombre.getText().trim().isEmpty()
+                && txtApellidos.getText().trim().isEmpty();
+
         String sql = "SELECT id, cedula, nombres, apellidos FROM estudiantes WHERE uid_rfid = ?";
         try (Connection cn = con.conectar();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -200,22 +207,20 @@ public class MetodosEstudiante {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 int idEncontrado = rs.getInt("id");
-                if (idSeleccionado == -1) {
+                if (idSeleccionado == -1 && camposVacios) {
+                    idSeleccionado = idEncontrado;
                     txtCedula.setText(rs.getString("cedula"));
                     txtNombre.setText(rs.getString("nombres"));
                     txtApellidos.setText(rs.getString("apellidos"));
                     JOptionPane.showMessageDialog(null, "Llavero ya registrado a este estudiante.");
-                } else if (idEncontrado != idSeleccionado) {
+                } else if (idSeleccionado == -1 || idEncontrado != idSeleccionado) {
                     JOptionPane.showMessageDialog(null, "Este llavero ya pertenece a otro estudiante.", "Llavero duplicado", JOptionPane.WARNING_MESSAGE);
                     txtRfid.setText("");
                     txtRfid.requestFocus();
                 }
             } else {
-                // Solo limpiar los campos cuando se está registrando un estudiante nuevo
-                if (idSeleccionado == -1) {
-                    txtCedula.setText("");
-                    txtNombre.setText("");
-                    txtApellidos.setText("");
+                // Si aún no llenaba los datos, llevar el cursor a Cédula; si ya los llenó, no borrar nada
+                if (idSeleccionado == -1 && camposVacios) {
                     txtCedula.requestFocus();
                 }
             }

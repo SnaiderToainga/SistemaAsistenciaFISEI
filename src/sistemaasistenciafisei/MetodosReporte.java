@@ -32,11 +32,41 @@ public class MetodosReporte {
     private Conexion con = new Conexion();
 
     /**
-     * 1. Calcular el consolidado de asistencias de 5 sesiones y determinar el estado académico FISEI.
+     * Obtener el total de sesiones registradas para un parcial (mínimo 5).
+     */
+    public int obtenerSesionesRegistradas(String parcial) {
+        int maxSesion = 5;
+        String sql = "SELECT MAX(sesion) AS max_sesion FROM asistencias WHERE parcial = ?";
+        try (Connection cn = con.conectar();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, parcial);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int valor = rs.getInt("max_sesion");
+                if (valor > maxSesion) {
+                    maxSesion = valor;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener sesiones: " + e.getMessage());
+        }
+        return maxSesion;
+    }
+
+    public void calcularConsolidado(String parcial, JTable tabla) {
+        calcularConsolidado(parcial, obtenerSesionesRegistradas(parcial), tabla);
+    }
+
+    /**
+     * 1. Calcular el consolidado de asistencias y determinar el estado académico FISEI.
      * @param parcial "Parcial 1" o "Parcial 2"
+     * @param totalSesiones Total de sesiones del parcial (por defecto 5 o más)
      * @param tabla JTable jtblReporteFinal donde se visualizarán los datos
      */
-    public void calcularConsolidado(String parcial, JTable tabla) {
+    public void calcularConsolidado(String parcial, int totalSesiones, JTable tabla) {
+        if (totalSesiones < 5) {
+            totalSesiones = 5;
+        }
         String[] titulos = {"Cédula", "Estudiante", "Asistencia", "Porcentaje", "Estado"};
         DefaultTableModel modelo = new DefaultTableModel(null, titulos) {
             @Override
@@ -45,7 +75,7 @@ public class MetodosReporte {
             }
         };
 
-        // a) Obtener los estudiantes matriculados y contar cuántas sesiones marcaron (de 5 totales)
+        // a) Obtener los estudiantes matriculados y contar cuántas sesiones marcaron
         String sql = "SELECT e.id, e.cedula, e.nombres, e.apellidos, "
                    + "       COUNT(a.id) AS total_asistencias "
                    + "FROM estudiantes e "
@@ -65,7 +95,7 @@ public class MetodosReporte {
                 int totalAsistencias = rs.getInt("total_asistencias");
 
                 // b) Aplicar la fórmula académica FISEI:
-                double porcentaje = (totalAsistencias / 5.0) * 100.0;
+                double porcentaje = (totalAsistencias / (double) totalSesiones) * 100.0;
 
                 // c) Clasificar en los 3 estados académicos normados:
                 String estado;
@@ -81,7 +111,7 @@ public class MetodosReporte {
                 modelo.addRow(new Object[]{
                     cedula,
                     nombres,
-                    totalAsistencias + " / 5",
+                    totalAsistencias + " / " + totalSesiones,
                     String.format(Locale.US, "%.1f%%", porcentaje),
                     estado
                 });
@@ -147,11 +177,19 @@ public class MetodosReporte {
         JOptionPane.showMessageDialog(null, mensaje.toString(), "Resumen " + parcial, JOptionPane.INFORMATION_MESSAGE);
     }
 
+    public void exportarPdfJasper(String parcial) {
+        exportarPdfJasper(parcial, obtenerSesionesRegistradas(parcial));
+    }
+
     /**
      * 2. Compilar el reporte JRXML, inyectar la conexión MySQL y abrir el visor JasperViewer.
      * @param parcial "Parcial 1" o "Parcial 2"
+     * @param totalSesiones Total de sesiones del parcial
      */
-    public void exportarPdfJasper(String parcial) {
+    public void exportarPdfJasper(String parcial, int totalSesiones) {
+        if (totalSesiones < 5) {
+            totalSesiones = 5;
+        }
         Connection cn = null;
         try {
             cn = con.conectar();
@@ -162,20 +200,20 @@ public class MetodosReporte {
 
             Map<String, Object> parametros = new HashMap<>();
             parametros.put("parcial", parcial);
+            parametros.put("totalSesiones", totalSesiones);
 
             JasperReport reporte = null;
 
-            // Intentar cargar reporte previamente compilado .jasper
-            InputStream jasperStream = getClass().getResourceAsStream("/sistemaasistenciafisei/ReporteEstudiantes.jasper");
-            if (jasperStream != null) {
-                try {
+            // Intentar cargar reporte previamente compilado .jasper y cerrar el archivo
+            try (InputStream jasperStream = getClass().getResourceAsStream("/sistemaasistenciafisei/ReporteEstudiantes.jasper")) {
+                if (jasperStream != null) {
                     reporte = (JasperReport) JRLoader.loadObject(jasperStream);
-                } catch (Exception ignored) {
-                    reporte = null;
                 }
+            } catch (Exception ignored) {
+                reporte = null;
             }
 
-            // Si no está compilado, compilar dinámicamente desde el JRXML
+            // Si no está compilado, compilar dinámicamente desde el JRXML y cerrar el archivo
             if (reporte == null) {
                 InputStream jrxmlStream = getClass().getResourceAsStream("/sistemaasistenciafisei/ReporteEstudiantes.jrxml");
                 if (jrxmlStream == null) {
@@ -190,7 +228,9 @@ public class MetodosReporte {
                     return;
                 }
 
-                reporte = JasperCompileManager.compileReport(jrxmlStream);
+                try (InputStream streamCerrar = jrxmlStream) {
+                    reporte = JasperCompileManager.compileReport(streamCerrar);
+                }
             }
 
             // Llenar el reporte con los parámetros y la conexión MySQL

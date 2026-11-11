@@ -14,6 +14,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
     MetodosReporte metodosReporte = new MetodosReporte();
     private final MetodosLogin metodosLogin = new MetodosLogin();
+    private int sesionesParcial1 = 5;
+    private int sesionesParcial2 = 5;
 
     public VentanaFISEI() {
         this("Administrador"); // Entra por defecto con todos los permisos
@@ -25,12 +27,31 @@ public class VentanaFISEI extends javax.swing.JFrame {
     public VentanaFISEI(String rol) {
         initComponents();
         this.setLocationRelativeTo(null);
+        sesionesParcial1 = metodosReporte.obtenerSesionesRegistradas("Parcial 1");
+        sesionesParcial2 = metodosReporte.obtenerSesionesRegistradas("Parcial 2");
+        cargarComboSesiones("Parcial 1", 1);
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
-        metodosReporte.calcularConsolidado("Parcial 1", jtblReporteFinal);
+        metodosReporte.calcularConsolidado("Parcial 1", getTotalSesiones("Parcial 1"), jtblReporteFinal);
         botonesModoNuevo();
         configurarEventosExtra();
         aplicarPermisosPorRol(rol);
+    }
+
+    private int getTotalSesiones(String parcial) {
+        return "Parcial 2".equals(parcial) ? sesionesParcial2 : sesionesParcial1;
+    }
+
+    private void cargarComboSesiones(String parcial, int sesionSeleccionada) {
+        int total = getTotalSesiones(parcial);
+        javax.swing.DefaultComboBoxModel<String> modelo = new javax.swing.DefaultComboBoxModel<>();
+        for (int i = 1; i <= total; i++) {
+            modelo.addElement(String.valueOf(i));
+        }
+        if (sesionSeleccionada >= 1 && sesionSeleccionada <= total) {
+            modelo.setSelectedItem(String.valueOf(sesionSeleccionada));
+        }
+        jcbxSesion.setModel(modelo);
     }
     
     private void aplicarPermisosPorRol(String rol) {
@@ -75,8 +96,19 @@ public class VentanaFISEI extends javax.swing.JFrame {
         java.awt.event.KeyAdapter detectorEdicion = new java.awt.event.KeyAdapter() {
             @Override
             public void keyTyped(java.awt.event.KeyEvent evt) {
-                if (metodos.estaEditando()) {
+                char c = evt.getKeyChar();
+                if (c != java.awt.event.KeyEvent.VK_ESCAPE && c != '\n' && metodos.estaEditando()) {
                     botonesModoEditando();
+                }
+            }
+
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                // Si el usuario presiona Esc mientras edita, cancela y vuelve al modo normal
+                if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE && metodos.estaEditando()) {
+                    metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula);
+                    jtblEstudiantes.clearSelection();
+                    botonesModoNuevo();
                 }
             }
         };
@@ -94,7 +126,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     jtxtLectorRfid.requestFocusInWindow();
                 } else if (pestana == 2) {
                     String parcial = jcbxParcialReporte.getSelectedItem().toString();
-                    metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+                    metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
                 }
             }
         });
@@ -131,6 +163,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jcbxParcial = new javax.swing.JComboBox<>();
         jcbxSesion = new javax.swing.JComboBox<>();
+        jbtnAgregarSesion = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jtxtLectorRfid = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
@@ -305,6 +338,13 @@ public class VentanaFISEI extends javax.swing.JFrame {
             }
         });
 
+        jbtnAgregarSesion.setText("+ Sesión");
+        jbtnAgregarSesion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtnAgregarSesionActionPerformed(evt);
+            }
+        });
+
         jLabel5.setText("\"Acercar Llavero\"");
 
         jtxtLectorRfid.addActionListener(new java.awt.event.ActionListener() {
@@ -345,7 +385,10 @@ public class VentanaFISEI extends javax.swing.JFrame {
                             .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jcbxSesion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jcbxSesion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jbtnAgregarSesion))
                             .addComponent(jcbxParcial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 412, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -363,7 +406,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jcbxSesion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7))
+                    .addComponent(jLabel7)
+                    .addComponent(jbtnAgregarSesion))
                 .addGap(32, 32, 32)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -489,18 +533,18 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.exportarPdfJasper(parcial);
+        metodosReporte.exportarPdfJasper(parcial, getTotalSesiones(parcial));
     }//GEN-LAST:event_jbtnImprimirJasperActionPerformed
 
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
         metodosReporte.mostrarResumen(parcial, jtblReporteFinal);
     }
 
     private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(parcial), jtblReporteFinal);
     }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
@@ -522,9 +566,12 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jbtnModificarEstudianteActionPerformed
 
     private void jtxtRfidMatriculaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtRfidMatriculaActionPerformed
+        boolean yaEstabaEditando = metodos.estaEditando();
         metodos.detectarRfid(jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
-        if (metodos.estaEditando()) {
+        if (yaEstabaEditando) {
             botonesModoEditando();
+        } else if (metodos.estaEditando()) {
+            botonesModoSeleccionado();
         }
     }//GEN-LAST:event_jtxtRfidMatriculaActionPerformed
 
@@ -535,14 +582,44 @@ public class VentanaFISEI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jtblEstudiantesMouseClicked
 
+    private void jbtnAgregarSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnAgregarSesionActionPerformed
+        int confirmacion = javax.swing.JOptionPane.showConfirmDialog(
+                this,
+                "¿Quiere agregar una nueva sesión?",
+                "Confirmar nueva sesión",
+                javax.swing.JOptionPane.YES_NO_OPTION
+        );
+        if (confirmacion != javax.swing.JOptionPane.YES_OPTION) {
+            jtxtLectorRfid.requestFocusInWindow();
+            return;
+        }
+
+        String parcial = jcbxParcial.getSelectedItem().toString();
+        int nuevaSesion;
+        if ("Parcial 2".equals(parcial)) {
+            sesionesParcial2++;
+            nuevaSesion = sesionesParcial2;
+        } else {
+            sesionesParcial1++;
+            nuevaSesion = sesionesParcial1;
+        }
+        cargarComboSesiones(parcial, nuevaSesion);
+        metodosAsistencia.cargarMarcacionesSesion(parcial, nuevaSesion, jtblMarcacionesSesion);
+        jlblMensajeAsistencia.setText("Sesión " + nuevaSesion + " habilitada en " + parcial + ".");
+        jtxtLectorRfid.requestFocusInWindow();
+    }//GEN-LAST:event_jbtnAgregarSesionActionPerformed
+
     private void jcbxParcialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxParcialActionPerformed
         String parcial = jcbxParcial.getSelectedItem().toString();
-        int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
-        metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+        cargarComboSesiones(parcial, 1);
+        metodosAsistencia.cargarMarcacionesSesion(parcial, 1, jtblMarcacionesSesion);
         jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jcbxParcialActionPerformed
 
     private void jcbxSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxSesionActionPerformed
+        if (jcbxSesion.getSelectedItem() == null) {
+            return;
+        }
         String parcial = jcbxParcial.getSelectedItem().toString();
         int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
         metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
@@ -610,6 +687,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
+    private javax.swing.JButton jbtnAgregarSesion;
     private javax.swing.JButton jbtnCalcularReporte;
     private javax.swing.JButton jbtnCerrarSesion;
     private javax.swing.JButton jbtnEliminarEstudiante;

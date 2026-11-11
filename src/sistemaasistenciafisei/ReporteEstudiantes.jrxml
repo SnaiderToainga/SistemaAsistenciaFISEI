@@ -14,14 +14,17 @@
     <parameter name="parcial" class="java.lang.String">
         <defaultValueExpression><![CDATA["Parcial 1"]]></defaultValueExpression>
     </parameter>
+    <parameter name="totalSesiones" class="java.lang.Integer">
+        <defaultValueExpression><![CDATA[5]]></defaultValueExpression>
+    </parameter>
     <queryString>
         <![CDATA[SELECT e.cedula, 
        CONCAT(e.nombres, ' ', e.apellidos) AS nombre_completo,
-       CONCAT(COUNT(a.id), ' / 5') AS asistencias_str,
-       CONCAT(ROUND((COUNT(a.id) / 5.0) * 100, 1), '%') AS porcentaje_str,
+       CONCAT(COUNT(a.id), ' / ', $P{totalSesiones}) AS asistencias_str,
+       CONCAT(ROUND((COUNT(a.id) / ($P{totalSesiones} * 1.0)) * 100, 1), '%') AS porcentaje_str,
        CASE 
-           WHEN ((COUNT(a.id) / 5.0) * 100) >= 80 THEN 'APROBADO'
-           WHEN ((COUNT(a.id) / 5.0) * 100) >= 70 THEN 'EN RIESGO'
+           WHEN ((COUNT(a.id) / ($P{totalSesiones} * 1.0)) * 100) >= 80 THEN 'APROBADO'
+           WHEN ((COUNT(a.id) / ($P{totalSesiones} * 1.0)) * 100) >= 70 THEN 'EN RIESGO'
            ELSE 'REPROBADO'
        END AS estado_academico
 FROM estudiantes e
