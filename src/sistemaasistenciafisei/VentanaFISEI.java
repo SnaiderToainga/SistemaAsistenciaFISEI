@@ -28,6 +28,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion("Parcial 1", 1, jtblMarcacionesSesion);
         metodosReporte.calcularConsolidado("Parcial 1", jtblReporteFinal);
+        botonesModoNuevo();
+        configurarEventosExtra();
         aplicarPermisosPorRol(rol);
     }
     
@@ -44,6 +46,43 @@ public class VentanaFISEI extends javax.swing.JFrame {
             jTabbedPane1.setSelectedIndex(0);
             this.setTitle("Sistema Asistencia FISEI - [Perfil: Administrador]");
         }
+    }
+
+    private void botonesModoNuevo() {
+        jbtnNuevoEstudiante.setEnabled(true);
+        jbtnGuardarEstudiante.setEnabled(true);
+        jbtnModificarEstudiante.setEnabled(false);
+        jbtnEliminarEstudiante.setEnabled(false);
+    }
+
+    private void botonesModoSeleccionado() {
+        jbtnNuevoEstudiante.setEnabled(true);
+        jbtnGuardarEstudiante.setEnabled(false);
+        jbtnModificarEstudiante.setEnabled(true);
+        jbtnEliminarEstudiante.setEnabled(true);
+    }
+
+    private void botonesModoEditando() {
+        jbtnNuevoEstudiante.setEnabled(false);
+        jbtnGuardarEstudiante.setEnabled(false);
+        jbtnModificarEstudiante.setEnabled(true);
+        jbtnEliminarEstudiante.setEnabled(false);
+    }
+
+    private void configurarEventosExtra() {
+        // Detectar cuando el usuario empieza a editar cualquier campo de un estudiante seleccionado
+        java.awt.event.KeyAdapter detectorEdicion = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                if (metodos.estaEditando()) {
+                    botonesModoEditando();
+                }
+            }
+        };
+        jtxtCedula.addKeyListener(detectorEdicion);
+        jtxtNombre.addKeyListener(detectorEdicion);
+        jtxtApellidos.addKeyListener(detectorEdicion);
+        jtxtRfidMatricula.addKeyListener(detectorEdicion);
     }
    
     
@@ -428,8 +467,9 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jbtnCerrarSesionActionPerformed
 
     private void jbtnEliminarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnEliminarEstudianteActionPerformed
-        // TODO add your handling code here:
-        metodos.eliminar(jtblEstudiantes, jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula);
+        if (metodos.eliminar(jtblEstudiantes, jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula)) {
+            botonesModoNuevo();
+        }
     }//GEN-LAST:event_jbtnEliminarEstudianteActionPerformed
 
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
@@ -448,28 +488,35 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
-        // TODO add your handling code here:
         metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula);
+        jtblEstudiantes.clearSelection();
+        botonesModoNuevo();
     }//GEN-LAST:event_jbtnNuevoEstudianteActionPerformed
 
     private void jbtnGuardarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnGuardarEstudianteActionPerformed
-        // TODO add your handling code here:
-        metodos.guardar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes);
+        if (metodos.guardar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes)) {
+            botonesModoNuevo();
+        }
     }//GEN-LAST:event_jbtnGuardarEstudianteActionPerformed
 
     private void jbtnModificarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnModificarEstudianteActionPerformed
-        // TODO add your handling code here:
-        metodos.modificar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes);
+        if (metodos.modificar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes)) {
+            botonesModoNuevo();
+        }
     }//GEN-LAST:event_jbtnModificarEstudianteActionPerformed
 
     private void jtxtRfidMatriculaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtRfidMatriculaActionPerformed
-        // TODO add your handling code here:
         metodos.detectarRfid(jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
+        if (metodos.estaEditando()) {
+            botonesModoEditando();
+        }
     }//GEN-LAST:event_jtxtRfidMatriculaActionPerformed
 
     private void jtblEstudiantesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jtblEstudiantesMouseClicked
-        // TODO add your handling code here:
         metodos.seleccionarFila(jtblEstudiantes, jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
+        if (metodos.estaEditando()) {
+            botonesModoSeleccionado();
+        }
     }//GEN-LAST:event_jtblEstudiantesMouseClicked
 
     private void jcbxParcialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxParcialActionPerformed
