@@ -190,16 +190,18 @@ public class MetodosReporte {
         JOptionPane.showMessageDialog(null, mensaje.toString(), titulo, JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void exportarPdfJasper(String parcial) {
-        exportarPdfJasper(parcial, obtenerSesionesRegistradas(parcial));
+    public void exportarPdfJasper(int idMateria, String nombreMateria, String parcial) {
+        exportarPdfJasper(idMateria, nombreMateria, parcial, obtenerSesionesRegistradas(idMateria, parcial));
     }
 
     /**
      * 2. Compilar el reporte JRXML, inyectar la conexión MySQL y abrir el visor JasperViewer.
+     * @param idMateria ID de la materia
+     * @param nombreMateria Nombre de la materia seleccionada
      * @param parcial "Parcial 1" o "Parcial 2"
      * @param totalSesiones Total de sesiones del parcial
      */
-    public void exportarPdfJasper(String parcial, int totalSesiones) {
+    public void exportarPdfJasper(int idMateria, String nombreMateria, String parcial, int totalSesiones) {
         if (totalSesiones < 5) {
             totalSesiones = 5;
         }
@@ -212,6 +214,8 @@ public class MetodosReporte {
             }
 
             Map<String, Object> parametros = new HashMap<>();
+            parametros.put("idMateria", idMateria);
+            parametros.put("nombreMateria", nombreMateria);
             parametros.put("parcial", parcial);
             parametros.put("totalSesiones", totalSesiones);
 
@@ -250,13 +254,13 @@ public class MetodosReporte {
             JasperPrint print = JasperFillManager.fillReport(reporte, parametros, cn);
 
             if (print == null || print.getPages().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "El reporte no arrojó registros para " + parcial + ".", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, "El reporte no arrojó registros para " + nombreMateria + " (" + parcial + ").", "Aviso", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
 
             // Abrir visor JasperViewer sin cerrar la aplicación principal (false)
             JasperViewer viewer = new JasperViewer(print, false);
-            viewer.setTitle("Reporte de Asistencia FISEI - " + parcial);
+            viewer.setTitle("Reporte de Asistencia FISEI - " + nombreMateria + " (" + parcial + ")");
             viewer.setVisible(true);
 
         } catch (Exception e) {

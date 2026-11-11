@@ -624,8 +624,9 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
+        String nombreMateria = jcbxMateriaReporte.getSelectedItem().toString();
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.exportarPdfJasper(parcial, getTotalSesiones(idMat, parcial));
+        metodosReporte.exportarPdfJasper(idMat, nombreMateria, parcial, getTotalSesiones(idMat, parcial));
     }//GEN-LAST:event_jbtnImprimirJasperActionPerformed
 
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
