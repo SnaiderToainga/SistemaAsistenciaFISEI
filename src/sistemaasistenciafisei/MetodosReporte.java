@@ -32,19 +32,21 @@ public class MetodosReporte {
     private Conexion con = new Conexion();
 
     /**
-     * Obtener el total de sesiones registradas para un parcial (mínimo 5).
+     * Obtener el total de sesiones registradas para una materia y parcial (mínimo 5).
      */
-    public int obtenerSesionesRegistradas(String parcial) {
+    public int obtenerSesionesRegistradas(int idMateria, String parcial) {
         int maxSesion = 5;
-        String sql = "SELECT MAX(sesion) AS max_sesion FROM asistencias WHERE parcial = ?";
+        String sql = "SELECT MAX(sesion) AS max_sesion FROM asistencias WHERE id_materia = ? AND parcial = ?";
         try (Connection cn = con.conectar();
              PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, parcial);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                int valor = rs.getInt("max_sesion");
-                if (valor > maxSesion) {
-                    maxSesion = valor;
+            ps.setInt(1, idMateria);
+            ps.setString(2, parcial);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int valor = rs.getInt("max_sesion");
+                    if (valor > maxSesion) {
+                        maxSesion = valor;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -53,17 +55,22 @@ public class MetodosReporte {
         return maxSesion;
     }
 
-    public void calcularConsolidado(String parcial, JTable tabla) {
-        calcularConsolidado(parcial, obtenerSesionesRegistradas(parcial), tabla);
+    public int obtenerSesionesRegistradas(String parcial) {
+        return obtenerSesionesRegistradas(1, parcial);
+    }
+
+    public void calcularConsolidado(int idMateria, String parcial, JTable tabla) {
+        calcularConsolidado(idMateria, parcial, obtenerSesionesRegistradas(idMateria, parcial), tabla);
     }
 
     /**
-     * 1. Calcular el consolidado de asistencias y determinar el estado académico FISEI.
+     * 1. Calcular el consolidado de asistencias por materia y determinar el estado académico FISEI.
+     * @param idMateria ID de la materia (1 = Computación Visual, 2 = Metodologías Ágiles)
      * @param parcial "Parcial 1" o "Parcial 2"
      * @param totalSesiones Total de sesiones del parcial (por defecto 5 o más)
      * @param tabla JTable jtblReporteFinal donde se visualizarán los datos
      */
-    public void calcularConsolidado(String parcial, int totalSesiones, JTable tabla) {
+    public void calcularConsolidado(int idMateria, String parcial, int totalSesiones, JTable tabla) {
         if (totalSesiones < 5) {
             totalSesiones = 5;
         }
@@ -75,46 +82,51 @@ public class MetodosReporte {
             }
         };
 
-        // a) Obtener los estudiantes matriculados y contar cuántas sesiones marcaron
+        // a) Obtener los estudiantes matriculados en esa materia y contar cuántas sesiones marcaron
         String sql = "SELECT e.id, e.cedula, e.nombres, e.apellidos, "
                    + "       COUNT(a.id) AS total_asistencias "
                    + "FROM estudiantes e "
-                   + "LEFT JOIN asistencias a ON e.id = a.id_estudiante AND a.parcial = ? AND a.estado = 'PRESENTE' "
+                   + "INNER JOIN matriculas m ON e.id = m.id_estudiante AND m.id_materia = ? "
+                   + "LEFT JOIN asistencias a ON e.id = a.id_estudiante "
+                   + "     AND a.id_materia = m.id_materia "
+                   + "     AND a.parcial = ? "
+                   + "     AND a.estado = 'PRESENTE' "
                    + "GROUP BY e.id, e.cedula, e.nombres, e.apellidos "
                    + "ORDER BY e.apellidos ASC, e.nombres ASC";
 
         try (Connection cn = con.conectar();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, parcial);
-            ResultSet rs = ps.executeQuery();
+            ps.setInt(1, idMateria);
+            ps.setString(2, parcial);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String cedula = rs.getString("cedula");
+                    String nombres = rs.getString("nombres") + " " + rs.getString("apellidos");
+                    int totalAsistencias = rs.getInt("total_asistencias");
 
-            while (rs.next()) {
-                String cedula = rs.getString("cedula");
-                String nombres = rs.getString("nombres") + " " + rs.getString("apellidos");
-                int totalAsistencias = rs.getInt("total_asistencias");
+                    // b) Aplicar la fórmula académica FISEI:
+                    double porcentaje = (totalAsistencias / (double) totalSesiones) * 100.0;
 
-                // b) Aplicar la fórmula académica FISEI:
-                double porcentaje = (totalAsistencias / (double) totalSesiones) * 100.0;
+                    // c) Clasificar en los 3 estados académicos normados:
+                    String estado;
+                    if (porcentaje >= 80.0) {
+                        estado = "APROBADO";
+                    } else if (porcentaje >= 70.0) {
+                        estado = "EN RIESGO";
+                    } else {
+                        estado = "REPROBADO";
+                    }
 
-                // c) Clasificar en los 3 estados académicos normados:
-                String estado;
-                if (porcentaje >= 80.0) {
-                    estado = "APROBADO";
-                } else if (porcentaje >= 70.0) {
-                    estado = "EN RIESGO";
-                } else {
-                    estado = "REPROBADO";
+                    // d) Cargar las columnas en el modelo de la tabla
+                    modelo.addRow(new Object[]{
+                        cedula,
+                        nombres,
+                        totalAsistencias + " / " + totalSesiones,
+                        String.format(Locale.US, "%.1f%%", porcentaje),
+                        estado
+                    });
                 }
-
-                // d) Cargar las columnas en el modelo de la tabla
-                modelo.addRow(new Object[]{
-                    cedula,
-                    nombres,
-                    totalAsistencias + " / " + totalSesiones,
-                    String.format(Locale.US, "%.1f%%", porcentaje),
-                    estado
-                });
             }
             tabla.setModel(modelo);
 
@@ -124,12 +136,13 @@ public class MetodosReporte {
     }
 
     /**
-     * 1.1 Mostrar un resumen del parcial con el conteo y la lista de estudiantes por estado.
+     * 1.1 Mostrar un resumen de la materia y parcial con el conteo y la lista de estudiantes por estado.
      */
-    public void mostrarResumen(String parcial, JTable tabla) {
+    public void mostrarResumen(String parcial, String nombreMateria, JTable tabla) {
         int total = tabla.getRowCount();
+        String titulo = "Resumen " + nombreMateria + " - " + parcial;
         if (total == 0) {
-            JOptionPane.showMessageDialog(null, "No hay estudiantes registrados para generar el resumen.", "Resumen " + parcial, JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No hay estudiantes registrados en " + nombreMateria + " para generar el resumen.", titulo, JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -160,7 +173,7 @@ public class MetodosReporte {
         }
 
         StringBuilder mensaje = new StringBuilder();
-        mensaje.append("RESUMEN DE ASISTENCIA - ").append(parcial).append("\n");
+        mensaje.append("RESUMEN DE ASISTENCIA - ").append(nombreMateria).append(" (").append(parcial).append(")\n");
         mensaje.append("Total de estudiantes: ").append(total).append("\n\n");
 
         mensaje.append("APROBADOS (").append(aprobados).append("):\n");
@@ -174,7 +187,7 @@ public class MetodosReporte {
         mensaje.append("\nREPROBADOS (").append(reprobados).append("):\n");
         mensaje.append(reprobados > 0 ? listaReprobados.toString() : " - Ninguno\n");
 
-        JOptionPane.showMessageDialog(null, mensaje.toString(), "Resumen " + parcial, JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(null, mensaje.toString(), titulo, JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void exportarPdfJasper(String parcial) {

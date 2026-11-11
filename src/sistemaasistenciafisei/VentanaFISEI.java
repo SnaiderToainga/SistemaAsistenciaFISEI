@@ -31,18 +31,19 @@ public class VentanaFISEI extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         for (int idMat : new int[]{1, 2}) {
-            sesionesPorCurso.put(claveCurso(idMat, "Parcial 1"), metodosReporte.obtenerSesionesRegistradas("Parcial 1"));
-            sesionesPorCurso.put(claveCurso(idMat, "Parcial 2"), metodosReporte.obtenerSesionesRegistradas("Parcial 2"));
+            sesionesPorCurso.put(claveCurso(idMat, "Parcial 1"), metodosReporte.obtenerSesionesRegistradas(idMat, "Parcial 1"));
+            sesionesPorCurso.put(claveCurso(idMat, "Parcial 2"), metodosReporte.obtenerSesionesRegistradas(idMat, "Parcial 2"));
         }
         botonesModoNuevo();
         configurarEventosExtra();
         aplicarPermisosPorRol(rol, idMateriaDocente, nombreMateria);
 
         int idMatAsis = getIdMateriaSeleccionada(jcbxMateriaAsistencia);
+        int idMatRep = getIdMateriaSeleccionada(jcbxMateriaReporte);
         cargarComboSesiones(idMatAsis, "Parcial 1", 1);
         metodos.cargarTabla(jtblEstudiantes);
         metodosAsistencia.cargarMarcacionesSesion(idMatAsis, "Parcial 1", 1, jtblMarcacionesSesion);
-        metodosReporte.calcularConsolidado("Parcial 1", getTotalSesiones(1, "Parcial 1"), jtblReporteFinal);
+        metodosReporte.calcularConsolidado(idMatRep, "Parcial 1", getTotalSesiones(idMatRep, "Parcial 1"), jtblReporteFinal);
     }
 
     private String claveCurso(int idMateria, String parcial) {
@@ -150,6 +151,12 @@ public class VentanaFISEI extends javax.swing.JFrame {
             jtxtLectorRfid.requestFocusInWindow();
         });
 
+        jcbxMateriaReporte.addActionListener(e -> {
+            int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
+            String parcial = jcbxParcialReporte.getSelectedItem().toString();
+            metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+        });
+
         // Al cambiar de pestaña, enfocar el lector RFID o refrescar la tabla de reportes
         jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
             @Override
@@ -160,7 +167,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
                 } else if (pestana == 2) {
                     int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
                     String parcial = jcbxParcialReporte.getSelectedItem().toString();
-                    metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+                    metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
                 }
             }
         });
@@ -623,15 +630,16 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
+        String nombreMateria = jcbxMateriaReporte.getSelectedItem().toString();
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
-        metodosReporte.mostrarResumen(parcial, jtblReporteFinal);
+        metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+        metodosReporte.mostrarResumen(parcial, nombreMateria, jtblReporteFinal);
     }
 
     private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.calcularConsolidado(parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+        metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
     }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
