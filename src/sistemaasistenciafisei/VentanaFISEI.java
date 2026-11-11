@@ -4,16 +4,21 @@
  */
 package sistemaasistenciafisei;
 
+import sistemaasistenciafisei.controlador.ControladorAsistencia;
+import sistemaasistenciafisei.controlador.ControladorEstudiante;
+import sistemaasistenciafisei.controlador.ControladorLogin;
+import sistemaasistenciafisei.controlador.ControladorReporte;
+
 /**
  *
  * @author User
  */
 public class VentanaFISEI extends javax.swing.JFrame {
     
-    MetodosEstudiante metodos = new MetodosEstudiante();
-    MetodosAsistencia metodosAsistencia = new MetodosAsistencia();
-    MetodosReporte metodosReporte = new MetodosReporte();
-    private final MetodosLogin metodosLogin = new MetodosLogin();
+    private final ControladorEstudiante metodos = new ControladorEstudiante();
+    private final ControladorAsistencia metodosAsistencia = new ControladorAsistencia();
+    private final ControladorReporte metodosReporte = new ControladorReporte();
+    private final ControladorLogin metodosLogin = new ControladorLogin();
     private final java.util.Map<String, Integer> sesionesPorCurso = new java.util.HashMap<>();
     private boolean mostrandoPromedio = false;
 

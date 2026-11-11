@@ -1,9 +1,6 @@
-package sistemaasistenciafisei;
+package sistemaasistenciafisei.controlador;
 
 import java.awt.Cursor;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
@@ -17,48 +14,29 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import sistemaasistenciafisei.dao.UsuarioDAO;
+import sistemaasistenciafisei.dao.impl.UsuarioDAOImpl;
+import sistemaasistenciafisei.modelo.Usuario;
 
-public class MetodosLogin {
+/**
+ * Controlador para la autenticación de usuarios y navegación inicial.
+ */
+public class ControladorLogin {
 
-    private static final Logger LOG = Logger.getLogger(MetodosLogin.class.getName());
+    private static final Logger LOG = Logger.getLogger(ControladorLogin.class.getName());
+    private final UsuarioDAO usuarioDAO;
     private char caracterOculto = '*';
-    private SwingWorker<UsuarioAutenticado, Void> tareaIngreso;
+    private SwingWorker<Usuario, Void> tareaIngreso;
 
-    private UsuarioAutenticado autenticar(String usuario, String clave) throws SQLException {
-        String sql = "SELECT u.nombre_completo, u.perfil, "
-                   + "       COALESCE(m.id, 0) AS id_materia, m.nombre AS nombre_materia "
-                   + "FROM usuarios u "
-                   + "LEFT JOIN materias m ON u.id = m.id_docente "
-                   + "WHERE u.usuario = ? AND u.clave = ? "
-                   + "ORDER BY m.id ASC LIMIT 1";
-
-        try (Connection cn = new Conexion().conectar()) {
-            if (cn == null) {
-                throw new SQLException("No se pudo conectar con la base de datos.");
-            }
-
-            try (PreparedStatement ps = cn.prepareStatement(sql)) {
-                ps.setString(1, usuario);
-                ps.setString(2, clave);
-                ps.setQueryTimeout(10);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return null;
-                    }
-
-                    String nombre = rs.getString("nombre_completo");
-                    String perfil = rs.getString("perfil");
-                    int idMateria = rs.getInt("id_materia");
-                    String nombreMateria = rs.getString("nombre_materia");
-                    return new UsuarioAutenticado(nombre, perfil, idMateria, nombreMateria);
-                }
-            }
-        }
+    public ControladorLogin() {
+        this(new UsuarioDAOImpl());
     }
 
-    public void configurarCampos(JTextField txtUsuario, JPasswordField txtClave,
-                                 JCheckBox mostrarClave) {
+    public ControladorLogin(UsuarioDAO usuarioDAO) {
+        this.usuarioDAO = usuarioDAO;
+    }
+
+    public void configurarCampos(JTextField txtUsuario, JPasswordField txtClave, JCheckBox mostrarClave) {
         caracterOculto = txtClave.getEchoChar() == 0 ? '*' : txtClave.getEchoChar();
         mostrarClave.setSelected(false);
         txtClave.setEchoChar(caracterOculto);
@@ -70,9 +48,9 @@ public class MetodosLogin {
     }
 
     public void ingresar(JTextField txtUsuario, JPasswordField txtClave,
-                         JButton btnIngresar, JCheckBox chkMostrarClave,
-                         JFrame ventanaLogin) {
-        // Una sola consulta por intento, aunque se pulse Enter varias veces.
+                          JButton btnIngresar, JCheckBox chkMostrarClave,
+                          JFrame ventanaLogin) {
+        // Una sola consulta por intento
         if (tareaIngreso != null) {
             return;
         }
@@ -100,8 +78,8 @@ public class MetodosLogin {
 
         tareaIngreso = new SwingWorker<>() {
             @Override
-            protected UsuarioAutenticado doInBackground() throws SQLException {
-                return autenticar(usuario, clave);
+            protected Usuario doInBackground() throws SQLException {
+                return usuarioDAO.autenticar(usuario, clave);
             }
 
             @Override
@@ -125,23 +103,34 @@ public class MetodosLogin {
         tareaIngreso.execute();
     }
 
-    private void mostrarResultado(JFrame ventanaLogin, UsuarioAutenticado usuario) {
+    private void mostrarResultado(JFrame ventanaLogin, Usuario usuario) {
         if (usuario == null) {
             JOptionPane.showMessageDialog(ventanaLogin, "Usuario o contraseña incorrectos.",
                     "Acceso denegado", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String curso = (usuario.nombreMateria() != null && !usuario.nombreMateria().isBlank())
-                ? "\nMateria: " + usuario.nombreMateria()
+        String curso = (usuario.getNombreMateria() != null && !usuario.getNombreMateria().isBlank())
+                ? "\nMateria: " + usuario.getNombreMateria()
                 : "";
         JOptionPane.showMessageDialog(ventanaLogin,
-                "Bienvenido " + usuario.nombre() + "\nPerfil: " + usuario.perfil() + curso,
+                "Bienvenido " + usuario.getNombreCompleto() + "\nPerfil: " + usuario.getPerfil() + curso,
                 "Acceso correcto", JOptionPane.INFORMATION_MESSAGE);
 
         if (ventanaLogin.isDisplayable()) {
-            new VentanaFISEI(usuario.perfil(), usuario.idMateria(), usuario.nombreMateria()).setVisible(true);
+            abrirVentanaPrincipal(usuario);
             ventanaLogin.dispose();
+        }
+    }
+
+    protected void abrirVentanaPrincipal(Usuario usuario) {
+        try {
+            Class<?> clazz = Class.forName("sistemaasistenciafisei.VentanaFISEI");
+            java.lang.reflect.Constructor<?> ctor = clazz.getConstructor(String.class, int.class, String.class);
+            JFrame ventana = (JFrame) ctor.newInstance(usuario.getPerfil(), usuario.getIdMateria(), usuario.getNombreMateria());
+            ventana.setVisible(true);
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al abrir VentanaFISEI", e);
         }
     }
 
@@ -169,8 +158,7 @@ public class MetodosLogin {
     private void informarError(JFrame ventanaLogin, Throwable error) {
         LOG.log(Level.SEVERE, "No se pudo validar el acceso", error);
         JOptionPane.showMessageDialog(ventanaLogin,
-                "No se pudo validar el acceso. Verifique que MySQL esté iniciado "
-                        + "e intente nuevamente.",
+                "No se pudo validar el acceso. Verifique que MySQL esté iniciado e intente nuevamente.",
                 "Error de conexión", JOptionPane.ERROR_MESSAGE);
     }
 
@@ -185,8 +173,17 @@ public class MetodosLogin {
 
         if (confirmacion == JOptionPane.YES_OPTION) {
             ventanaActual.dispose();
-            VentanaLogin login = new VentanaLogin();
+            abrirVentanaLogin();
+        }
+    }
+
+    protected void abrirVentanaLogin() {
+        try {
+            Class<?> clazz = Class.forName("sistemaasistenciafisei.VentanaLogin");
+            JFrame login = (JFrame) clazz.getDeclaredConstructor().newInstance();
             login.setVisible(true);
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al abrir VentanaLogin", e);
         }
     }
 
@@ -195,8 +192,5 @@ public class MetodosLogin {
             tareaIngreso.cancel(true);
         }
         ventanaLogin.dispose();
-    }
-
-    private record UsuarioAutenticado(String nombre, String perfil, int idMateria, String nombreMateria) {
     }
 }

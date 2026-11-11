@@ -1,17 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package sistemaasistenciafisei;
+package sistemaasistenciafisei.controlador;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -22,37 +17,40 @@ import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.view.JasperViewer;
+import sistemaasistenciafisei.conexion.Conexion;
+import sistemaasistenciafisei.dao.AsistenciaDAO;
+import sistemaasistenciafisei.dao.ReporteDAO;
+import sistemaasistenciafisei.dao.impl.AsistenciaDAOImpl;
+import sistemaasistenciafisei.dao.impl.ReporteDAOImpl;
+import sistemaasistenciafisei.modelo.ReporteAsistenciaDTO;
 
 /**
- * Módulo de Reporte y Estados Académicos FISEI con JasperReports
- * @author Joel
+ * Controlador de Reportes y Estados Académicos FISEI con JasperReports y ReporteDAO.
  */
-public class MetodosReporte {
+public class ControladorReporte {
 
-    private Conexion con = new Conexion();
+    private final ReporteDAO reporteDAO;
+    private final AsistenciaDAO asistenciaDAO;
+
+    public ControladorReporte() {
+        this(new ReporteDAOImpl(), new AsistenciaDAOImpl());
+    }
+
+    public ControladorReporte(ReporteDAO reporteDAO, AsistenciaDAO asistenciaDAO) {
+        this.reporteDAO = reporteDAO;
+        this.asistenciaDAO = asistenciaDAO;
+    }
 
     /**
      * Obtener el total de sesiones registradas para una materia y parcial (mínimo 5).
      */
     public int obtenerSesionesRegistradas(int idMateria, String parcial) {
-        int maxSesion = 5;
-        String sql = "SELECT MAX(sesion) AS max_sesion FROM asistencias WHERE id_materia = ? AND parcial = ?";
-        try (Connection cn = con.conectar();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setInt(1, idMateria);
-            ps.setString(2, parcial);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int valor = rs.getInt("max_sesion");
-                    if (valor > maxSesion) {
-                        maxSesion = valor;
-                    }
-                }
-            }
-        } catch (Exception e) {
+        try {
+            return asistenciaDAO.obtenerMaxSesion(idMateria, parcial);
+        } catch (SQLException e) {
             System.err.println("Error al obtener sesiones: " + e.getMessage());
+            return 5;
         }
-        return maxSesion;
     }
 
     public int obtenerSesionesRegistradas(String parcial) {
@@ -65,15 +63,8 @@ public class MetodosReporte {
 
     /**
      * 1. Calcular el consolidado de asistencias por materia y determinar el estado académico FISEI.
-     * @param idMateria ID de la materia (1 = Computación Visual, 2 = Metodologías Ágiles)
-     * @param parcial "Parcial 1" o "Parcial 2"
-     * @param totalSesiones Total de sesiones del parcial (por defecto 5 o más)
-     * @param tabla JTable jtblReporteFinal donde se visualizarán los datos
      */
     public void calcularConsolidado(int idMateria, String parcial, int totalSesiones, JTable tabla) {
-        if (totalSesiones < 5) {
-            totalSesiones = 5;
-        }
         String[] titulos = {"Cédula", "Estudiante", "Asistencia", "Porcentaje", "Estado"};
         DefaultTableModel modelo = new DefaultTableModel(null, titulos) {
             @Override
@@ -82,69 +73,27 @@ public class MetodosReporte {
             }
         };
 
-        // a) Obtener los estudiantes matriculados en esa materia y contar cuántas sesiones marcaron
-        String sql = "SELECT e.id, e.cedula, e.nombres, e.apellidos, "
-                   + "       COUNT(a.id) AS total_asistencias "
-                   + "FROM estudiantes e "
-                   + "INNER JOIN matriculas m ON e.id = m.id_estudiante AND m.id_materia = ? "
-                   + "LEFT JOIN asistencias a ON e.id = a.id_estudiante "
-                   + "     AND a.id_materia = m.id_materia "
-                   + "     AND a.parcial = ? "
-                   + "     AND a.estado = 'PRESENTE' "
-                   + "GROUP BY e.id, e.cedula, e.nombres, e.apellidos "
-                   + "ORDER BY e.apellidos ASC, e.nombres ASC";
-
-        try (Connection cn = con.conectar();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setInt(1, idMateria);
-            ps.setString(2, parcial);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String cedula = rs.getString("cedula");
-                    String nombres = rs.getString("nombres") + " " + rs.getString("apellidos");
-                    int totalAsistencias = rs.getInt("total_asistencias");
-
-                    // b) Aplicar la fórmula académica FISEI:
-                    double porcentaje = (totalAsistencias / (double) totalSesiones) * 100.0;
-
-                    // c) Clasificar en los 3 estados académicos normados:
-                    String estado;
-                    if (porcentaje >= 80.0) {
-                        estado = "APROBADO";
-                    } else if (porcentaje >= 70.0) {
-                        estado = "EN RIESGO";
-                    } else {
-                        estado = "REPROBADO";
-                    }
-
-                    // d) Cargar las columnas en el modelo de la tabla
-                    modelo.addRow(new Object[]{
-                        cedula,
-                        nombres,
-                        totalAsistencias + " / " + totalSesiones,
-                        String.format(Locale.US, "%.1f%%", porcentaje),
-                        estado
-                    });
-                }
+        try {
+            List<ReporteAsistenciaDTO> lista = reporteDAO.obtenerConsolidadoParcial(idMateria, parcial, totalSesiones);
+            for (ReporteAsistenciaDTO dto : lista) {
+                modelo.addRow(new Object[]{
+                    dto.getCedula(),
+                    dto.getNombreCompleto(),
+                    dto.getAsistenciaTexto(),
+                    dto.getPorcentajeFormateado(),
+                    dto.getEstado()
+                });
             }
             tabla.setModel(modelo);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error al calcular el consolidado: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al calcular el consolidado: " + e.getMessage(), "Error BD", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
-     * 1.05 Calcular el promedio de asistencia de los dos parciales (Parcial 1 y Parcial 2) por materia.
+     * 2. Calcular el promedio de asistencia de los dos parciales (Parcial 1 y Parcial 2) por materia.
      */
     public void calcularPromedioParciales(int idMateria, int sesionesP1, int sesionesP2, JTable tabla) {
-        if (sesionesP1 < 5) {
-            sesionesP1 = 5;
-        }
-        if (sesionesP2 < 5) {
-            sesionesP2 = 5;
-        }
         String[] titulos = {"Cédula", "Estudiante", "Asistencia (P1 + P2)", "Promedio", "Estado"};
         DefaultTableModel modelo = new DefaultTableModel(null, titulos) {
             @Override
@@ -153,61 +102,25 @@ public class MetodosReporte {
             }
         };
 
-        String sql = "SELECT e.id, e.cedula, e.nombres, e.apellidos, "
-                   + "       SUM(CASE WHEN a.parcial = 'Parcial 1' THEN 1 ELSE 0 END) AS asist_p1, "
-                   + "       SUM(CASE WHEN a.parcial = 'Parcial 2' THEN 1 ELSE 0 END) AS asist_p2 "
-                   + "FROM estudiantes e "
-                   + "INNER JOIN matriculas m ON e.id = m.id_estudiante AND m.id_materia = ? "
-                   + "LEFT JOIN asistencias a ON e.id = a.id_estudiante "
-                   + "     AND a.id_materia = m.id_materia "
-                   + "     AND a.parcial IN ('Parcial 1', 'Parcial 2') "
-                   + "     AND a.estado = 'PRESENTE' "
-                   + "GROUP BY e.id, e.cedula, e.nombres, e.apellidos "
-                   + "ORDER BY e.apellidos ASC, e.nombres ASC";
-
-        try (Connection cn = con.conectar();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setInt(1, idMateria);
-            try (ResultSet rs = ps.executeQuery()) {
-                int totalSesionesCurso = sesionesP1 + sesionesP2;
-                while (rs.next()) {
-                    String cedula = rs.getString("cedula");
-                    String nombres = rs.getString("nombres") + " " + rs.getString("apellidos");
-                    int asistP1 = rs.getInt("asist_p1");
-                    int asistP2 = rs.getInt("asist_p2");
-
-                    double porcP1 = (asistP1 / (double) sesionesP1) * 100.0;
-                    double porcP2 = (asistP2 / (double) sesionesP2) * 100.0;
-                    double promedio = (porcP1 + porcP2) / 2.0;
-
-                    String estado;
-                    if (promedio >= 80.0) {
-                        estado = "APROBADO";
-                    } else if (promedio >= 70.0) {
-                        estado = "EN RIESGO";
-                    } else {
-                        estado = "REPROBADO";
-                    }
-
-                    modelo.addRow(new Object[]{
-                        cedula,
-                        nombres,
-                        (asistP1 + asistP2) + " / " + totalSesionesCurso + " (P1:" + asistP1 + "/" + sesionesP1 + ", P2:" + asistP2 + "/" + sesionesP2 + ")",
-                        String.format(Locale.US, "%.1f%%", promedio),
-                        estado
-                    });
-                }
+        try {
+            List<ReporteAsistenciaDTO> lista = reporteDAO.obtenerPromedioParciales(idMateria, sesionesP1, sesionesP2);
+            for (ReporteAsistenciaDTO dto : lista) {
+                modelo.addRow(new Object[]{
+                    dto.getCedula(),
+                    dto.getNombreCompleto(),
+                    dto.getAsistenciaPromedioTexto(),
+                    dto.getPromedioFormateado(),
+                    dto.getEstado()
+                });
             }
             tabla.setModel(modelo);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error al calcular el promedio de parciales: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al calcular el promedio de parciales: " + e.getMessage(), "Error BD", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
-     * 1.1 Mostrar un resumen de la materia y parcial con el conteo y la lista de estudiantes por estado.
+     * 3. Mostrar un resumen de la materia y parcial con el conteo y la lista de estudiantes por estado.
      */
     public void mostrarResumen(String parcial, String nombreMateria, JTable tabla) {
         int total = tabla.getRowCount();
@@ -269,13 +182,6 @@ public class MetodosReporte {
         exportarPdfJasperInterno(idMateria, nombreMateria, "Promedio Final", sesionesP1, sesionesP2);
     }
 
-    /**
-     * 2. Compilar el reporte JRXML, inyectar la conexión MySQL y abrir el visor JasperViewer.
-     * @param idMateria ID de la materia
-     * @param nombreMateria Nombre de la materia seleccionada
-     * @param parcial "Parcial 1" o "Parcial 2"
-     * @param totalSesiones Total de sesiones del parcial
-     */
     public void exportarPdfJasper(int idMateria, String nombreMateria, String parcial, int totalSesiones) {
         exportarPdfJasperInterno(idMateria, nombreMateria, parcial, totalSesiones, totalSesiones);
     }
@@ -289,7 +195,7 @@ public class MetodosReporte {
         }
         Connection cn = null;
         try {
-            cn = con.conectar();
+            cn = Conexion.getConexion();
             if (cn == null) {
                 JOptionPane.showMessageDialog(null, "No se pudo conectar a la base de datos.", "Error de Conexión", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -304,7 +210,7 @@ public class MetodosReporte {
 
             JasperReport reporte = null;
 
-            // Intentar cargar reporte previamente compilado .jasper y cerrar el archivo
+            // Intentar cargar reporte previamente compilado .jasper
             try (InputStream jasperStream = getClass().getResourceAsStream("/sistemaasistenciafisei/ReporteEstudiantes.jasper")) {
                 if (jasperStream != null) {
                     reporte = (JasperReport) JRLoader.loadObject(jasperStream);
@@ -313,7 +219,7 @@ public class MetodosReporte {
                 reporte = null;
             }
 
-            // Si no está compilado, compilar dinámicamente desde el JRXML y cerrar el archivo
+            // Si no está compilado, compilar dinámicamente desde el JRXML
             if (reporte == null) {
                 InputStream jrxmlStream = getClass().getResourceAsStream("/sistemaasistenciafisei/ReporteEstudiantes.jrxml");
                 if (jrxmlStream == null) {

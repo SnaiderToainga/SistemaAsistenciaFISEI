@@ -1,8 +1,10 @@
 package sistemaasistenciafisei;
 
+import sistemaasistenciafisei.controlador.ControladorLogin;
+
 public class VentanaLogin extends javax.swing.JFrame {
 
-    private final MetodosLogin metodosLogin = new MetodosLogin();
+    private final ControladorLogin metodosLogin = new ControladorLogin();
 
     /**
      * Creates new form VentanaLogin
