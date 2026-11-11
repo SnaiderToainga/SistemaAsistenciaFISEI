@@ -15,6 +15,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     MetodosReporte metodosReporte = new MetodosReporte();
     private final MetodosLogin metodosLogin = new MetodosLogin();
     private final java.util.Map<String, Integer> sesionesPorCurso = new java.util.HashMap<>();
+    private boolean mostrandoPromedio = false;
 
     public VentanaFISEI() {
         this("Administrador", 0, null); // Entra por defecto con todos los permisos
@@ -153,8 +154,12 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
         jcbxMateriaReporte.addActionListener(e -> {
             int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
-            String parcial = jcbxParcialReporte.getSelectedItem().toString();
-            metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+            if (mostrandoPromedio) {
+                metodosReporte.calcularPromedioParciales(idMat, getTotalSesiones(idMat, "Parcial 1"), getTotalSesiones(idMat, "Parcial 2"), jtblReporteFinal);
+            } else {
+                String parcial = jcbxParcialReporte.getSelectedItem().toString();
+                metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+            }
         });
 
         // Al cambiar de pestaña, enfocar el lector RFID o refrescar la tabla de reportes
@@ -166,8 +171,12 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     jtxtLectorRfid.requestFocusInWindow();
                 } else if (pestana == 2) {
                     int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
-                    String parcial = jcbxParcialReporte.getSelectedItem().toString();
-                    metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+                    if (mostrandoPromedio) {
+                        metodosReporte.calcularPromedioParciales(idMat, getTotalSesiones(idMat, "Parcial 1"), getTotalSesiones(idMat, "Parcial 2"), jtblReporteFinal);
+                    } else {
+                        String parcial = jcbxParcialReporte.getSelectedItem().toString();
+                        metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
+                    }
                 }
             }
         });
@@ -223,6 +232,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jcbxParcialReporte = new javax.swing.JComboBox<>();
         jLabel8 = new javax.swing.JLabel();
         jbtnCalcularReporte = new javax.swing.JButton();
+        jbtnPromedioParciales = new javax.swing.JButton();
         jbtnImprimirJasper = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         jtblReporteFinal = new javax.swing.JTable();
@@ -518,6 +528,13 @@ public class VentanaFISEI extends javax.swing.JFrame {
             }
         });
 
+        jbtnPromedioParciales.setText("Promedio Final");
+        jbtnPromedioParciales.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbtnPromedioParcialesActionPerformed(evt);
+            }
+        });
+
         jbtnImprimirJasper.setText("Imprimir");
         jbtnImprimirJasper.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -549,7 +566,9 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addGroup(jPanel3Layout.createSequentialGroup()
                             .addComponent(jbtnCalcularReporte)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(jbtnPromedioParciales)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                             .addComponent(jbtnImprimirJasper))
                         .addGroup(jPanel3Layout.createSequentialGroup()
                             .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -575,6 +594,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jbtnCalcularReporte)
+                    .addComponent(jbtnPromedioParciales)
                     .addComponent(jbtnImprimirJasper))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
@@ -625,11 +645,28 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private void jbtnImprimirJasperActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnImprimirJasperActionPerformed
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String nombreMateria = jcbxMateriaReporte.getSelectedItem().toString();
-        String parcial = jcbxParcialReporte.getSelectedItem().toString();
-        metodosReporte.exportarPdfJasper(idMat, nombreMateria, parcial, getTotalSesiones(idMat, parcial));
+        if (mostrandoPromedio) {
+            metodosReporte.exportarPdfPromedioJasper(idMat, nombreMateria,
+                    getTotalSesiones(idMat, "Parcial 1"), getTotalSesiones(idMat, "Parcial 2"));
+        } else {
+            String parcial = jcbxParcialReporte.getSelectedItem().toString();
+            metodosReporte.exportarPdfJasper(idMat, nombreMateria, parcial, getTotalSesiones(idMat, parcial));
+        }
     }//GEN-LAST:event_jbtnImprimirJasperActionPerformed
 
+    private void jbtnPromedioParcialesActionPerformed(java.awt.event.ActionEvent evt) {
+        mostrandoPromedio = true;
+        int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
+        String nombreMateria = jcbxMateriaReporte.getSelectedItem().toString();
+        int sesionesP1 = getTotalSesiones(idMat, "Parcial 1");
+        int sesionesP2 = getTotalSesiones(idMat, "Parcial 2");
+        metodosReporte.calcularPromedioParciales(idMat, sesionesP1, sesionesP2, jtblReporteFinal);
+        metodosReporte.mostrarResumen("Promedio Final (P1 y P2)", nombreMateria, jtblReporteFinal);
+        metodosReporte.exportarPdfPromedioJasper(idMat, nombreMateria, sesionesP1, sesionesP2);
+    }
+
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        mostrandoPromedio = false;
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String nombreMateria = jcbxMateriaReporte.getSelectedItem().toString();
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
@@ -638,6 +675,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }
 
     private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
+        mostrandoPromedio = false;
         int idMat = getIdMateriaSeleccionada(jcbxMateriaReporte);
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
         metodosReporte.calcularConsolidado(idMat, parcial, getTotalSesiones(idMat, parcial), jtblReporteFinal);
@@ -798,6 +836,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JButton jbtnImprimirJasper;
     private javax.swing.JButton jbtnModificarEstudiante;
     private javax.swing.JButton jbtnNuevoEstudiante;
+    private javax.swing.JButton jbtnPromedioParciales;
     private javax.swing.JComboBox<String> jcbxMateriaAsistencia;
     private javax.swing.JComboBox<String> jcbxMateriaReporte;
     private javax.swing.JComboBox<String> jcbxParcial;

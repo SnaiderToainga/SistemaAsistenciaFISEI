@@ -12,7 +12,7 @@ import javax.swing.JOptionPane;
  * @author User
  */
 
-// TENER EN CUENTA PARA LAS PRUEBAS CAMBIAR SU PUERTO DEL PHPMYADMIN
+
 
 public class Conexion {
       public Connection conectar(){

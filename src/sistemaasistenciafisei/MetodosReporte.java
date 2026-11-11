@@ -136,6 +136,77 @@ public class MetodosReporte {
     }
 
     /**
+     * 1.05 Calcular el promedio de asistencia de los dos parciales (Parcial 1 y Parcial 2) por materia.
+     */
+    public void calcularPromedioParciales(int idMateria, int sesionesP1, int sesionesP2, JTable tabla) {
+        if (sesionesP1 < 5) {
+            sesionesP1 = 5;
+        }
+        if (sesionesP2 < 5) {
+            sesionesP2 = 5;
+        }
+        String[] titulos = {"Cédula", "Estudiante", "Asistencia (P1 + P2)", "Promedio", "Estado"};
+        DefaultTableModel modelo = new DefaultTableModel(null, titulos) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        String sql = "SELECT e.id, e.cedula, e.nombres, e.apellidos, "
+                   + "       SUM(CASE WHEN a.parcial = 'Parcial 1' THEN 1 ELSE 0 END) AS asist_p1, "
+                   + "       SUM(CASE WHEN a.parcial = 'Parcial 2' THEN 1 ELSE 0 END) AS asist_p2 "
+                   + "FROM estudiantes e "
+                   + "INNER JOIN matriculas m ON e.id = m.id_estudiante AND m.id_materia = ? "
+                   + "LEFT JOIN asistencias a ON e.id = a.id_estudiante "
+                   + "     AND a.id_materia = m.id_materia "
+                   + "     AND a.parcial IN ('Parcial 1', 'Parcial 2') "
+                   + "     AND a.estado = 'PRESENTE' "
+                   + "GROUP BY e.id, e.cedula, e.nombres, e.apellidos "
+                   + "ORDER BY e.apellidos ASC, e.nombres ASC";
+
+        try (Connection cn = con.conectar();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, idMateria);
+            try (ResultSet rs = ps.executeQuery()) {
+                int totalSesionesCurso = sesionesP1 + sesionesP2;
+                while (rs.next()) {
+                    String cedula = rs.getString("cedula");
+                    String nombres = rs.getString("nombres") + " " + rs.getString("apellidos");
+                    int asistP1 = rs.getInt("asist_p1");
+                    int asistP2 = rs.getInt("asist_p2");
+
+                    double porcP1 = (asistP1 / (double) sesionesP1) * 100.0;
+                    double porcP2 = (asistP2 / (double) sesionesP2) * 100.0;
+                    double promedio = (porcP1 + porcP2) / 2.0;
+
+                    String estado;
+                    if (promedio >= 80.0) {
+                        estado = "APROBADO";
+                    } else if (promedio >= 70.0) {
+                        estado = "EN RIESGO";
+                    } else {
+                        estado = "REPROBADO";
+                    }
+
+                    modelo.addRow(new Object[]{
+                        cedula,
+                        nombres,
+                        (asistP1 + asistP2) + " / " + totalSesionesCurso + " (P1:" + asistP1 + "/" + sesionesP1 + ", P2:" + asistP2 + "/" + sesionesP2 + ")",
+                        String.format(Locale.US, "%.1f%%", promedio),
+                        estado
+                    });
+                }
+            }
+            tabla.setModel(modelo);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error al calcular el promedio de parciales: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
      * 1.1 Mostrar un resumen de la materia y parcial con el conteo y la lista de estudiantes por estado.
      */
     public void mostrarResumen(String parcial, String nombreMateria, JTable tabla) {
@@ -194,6 +265,10 @@ public class MetodosReporte {
         exportarPdfJasper(idMateria, nombreMateria, parcial, obtenerSesionesRegistradas(idMateria, parcial));
     }
 
+    public void exportarPdfPromedioJasper(int idMateria, String nombreMateria, int sesionesP1, int sesionesP2) {
+        exportarPdfJasperInterno(idMateria, nombreMateria, "Promedio Final", sesionesP1, sesionesP2);
+    }
+
     /**
      * 2. Compilar el reporte JRXML, inyectar la conexión MySQL y abrir el visor JasperViewer.
      * @param idMateria ID de la materia
@@ -202,8 +277,15 @@ public class MetodosReporte {
      * @param totalSesiones Total de sesiones del parcial
      */
     public void exportarPdfJasper(int idMateria, String nombreMateria, String parcial, int totalSesiones) {
+        exportarPdfJasperInterno(idMateria, nombreMateria, parcial, totalSesiones, totalSesiones);
+    }
+
+    private void exportarPdfJasperInterno(int idMateria, String nombreMateria, String parcial, int totalSesiones, int totalSesionesP2) {
         if (totalSesiones < 5) {
             totalSesiones = 5;
+        }
+        if (totalSesionesP2 < 5) {
+            totalSesionesP2 = 5;
         }
         Connection cn = null;
         try {
@@ -218,6 +300,7 @@ public class MetodosReporte {
             parametros.put("nombreMateria", nombreMateria);
             parametros.put("parcial", parcial);
             parametros.put("totalSesiones", totalSesiones);
+            parametros.put("totalSesionesP2", totalSesionesP2);
 
             JasperReport reporte = null;
 
