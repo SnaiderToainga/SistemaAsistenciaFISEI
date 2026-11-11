@@ -94,6 +94,60 @@ public class MetodosReporte {
     }
 
     /**
+     * 1.1 Mostrar un resumen del parcial con el conteo y la lista de estudiantes por estado.
+     */
+    public void mostrarResumen(String parcial, JTable tabla) {
+        int total = tabla.getRowCount();
+        if (total == 0) {
+            JOptionPane.showMessageDialog(null, "No hay estudiantes registrados para generar el resumen.", "Resumen " + parcial, JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int aprobados = 0;
+        int enRiesgo = 0;
+        int reprobados = 0;
+
+        StringBuilder listaAprobados = new StringBuilder();
+        StringBuilder listaEnRiesgo = new StringBuilder();
+        StringBuilder listaReprobados = new StringBuilder();
+
+        for (int i = 0; i < total; i++) {
+            String nombre = tabla.getValueAt(i, 1).toString();
+            String porcentaje = tabla.getValueAt(i, 3).toString();
+            String estado = tabla.getValueAt(i, 4).toString();
+
+            String linea = " - " + nombre + " (" + porcentaje + ")\n";
+            if ("APROBADO".equals(estado)) {
+                aprobados++;
+                listaAprobados.append(linea);
+            } else if ("EN RIESGO".equals(estado)) {
+                enRiesgo++;
+                listaEnRiesgo.append(linea);
+            } else {
+                reprobados++;
+                listaReprobados.append(linea);
+            }
+        }
+
+        StringBuilder mensaje = new StringBuilder();
+        mensaje.append("RESUMEN DE ASISTENCIA - ").append(parcial).append("\n");
+        mensaje.append("Total de estudiantes: ").append(total).append("\n\n");
+
+        mensaje.append("APROBADOS (").append(aprobados).append("):\n");
+        mensaje.append(aprobados > 0 ? listaAprobados.toString() : " - Ninguno\n");
+
+        if (enRiesgo > 0) {
+            mensaje.append("\nEN RIESGO (").append(enRiesgo).append("):\n");
+            mensaje.append(listaEnRiesgo.toString());
+        }
+
+        mensaje.append("\nREPROBADOS (").append(reprobados).append("):\n");
+        mensaje.append(reprobados > 0 ? listaReprobados.toString() : " - Ninguno\n");
+
+        JOptionPane.showMessageDialog(null, mensaje.toString(), "Resumen " + parcial, JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    /**
      * 2. Compilar el reporte JRXML, inyectar la conexión MySQL y abrir el visor JasperViewer.
      * @param parcial "Parcial 1" o "Parcial 2"
      */

@@ -38,7 +38,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
             // El Docente no tiene acceso a matricular ni eliminar estudiantes
             jTabbedPane1.setEnabledAt(0, false); 
             // Lo manda directo a la pestaña de pasar asistencia con el llavero RFID
-            jTabbedPane1.setSelectedIndex(1);    
+            jTabbedPane1.setSelectedIndex(1);
+            jtxtLectorRfid.requestFocusInWindow();
             this.setTitle("Sistema Asistencia FISEI - [Perfil: Docente]");
         } else {
             // Administrador: acceso total a las 3 pestañas
@@ -83,6 +84,20 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jtxtNombre.addKeyListener(detectorEdicion);
         jtxtApellidos.addKeyListener(detectorEdicion);
         jtxtRfidMatricula.addKeyListener(detectorEdicion);
+
+        // Al cambiar de pestaña, enfocar el lector RFID o refrescar la tabla de reportes
+        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                int pestana = jTabbedPane1.getSelectedIndex();
+                if (pestana == 1) {
+                    jtxtLectorRfid.requestFocusInWindow();
+                } else if (pestana == 2) {
+                    String parcial = jcbxParcialReporte.getSelectedItem().toString();
+                    metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+                }
+            }
+        });
     }
    
     
@@ -480,6 +495,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private void jbtnCalcularReporteActionPerformed(java.awt.event.ActionEvent evt) {
         String parcial = jcbxParcialReporte.getSelectedItem().toString();
         metodosReporte.calcularConsolidado(parcial, jtblReporteFinal);
+        metodosReporte.mostrarResumen(parcial, jtblReporteFinal);
     }
 
     private void jcbxParcialReporteActionPerformed(java.awt.event.ActionEvent evt) {
@@ -523,12 +539,14 @@ public class VentanaFISEI extends javax.swing.JFrame {
         String parcial = jcbxParcial.getSelectedItem().toString();
         int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
         metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+        jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jcbxParcialActionPerformed
 
     private void jcbxSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jcbxSesionActionPerformed
         String parcial = jcbxParcial.getSelectedItem().toString();
         int sesion = Integer.parseInt(jcbxSesion.getSelectedItem().toString());
         metodosAsistencia.cargarMarcacionesSesion(parcial, sesion, jtblMarcacionesSesion);
+        jtxtLectorRfid.requestFocusInWindow();
     }//GEN-LAST:event_jcbxSesionActionPerformed
 
     private void jtxtLectorRfidActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtLectorRfidActionPerformed

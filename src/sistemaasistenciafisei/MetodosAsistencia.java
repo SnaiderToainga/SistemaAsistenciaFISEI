@@ -23,7 +23,12 @@ public class MetodosAsistencia {
     // 1. Cargar en la tabla las asistencias registradas en el parcial y sesión actual
     public void cargarMarcacionesSesion(String parcial, int sesion, JTable tabla) {
         String[] titulos = {"Cédula", "Nombres", "Apellidos", "Fecha", "Hora", "Estado"};
-        DefaultTableModel modelo = new DefaultTableModel(null, titulos);
+        DefaultTableModel modelo = new DefaultTableModel(null, titulos) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         String sql = "SELECT e.cedula, e.nombres, e.apellidos, a.fecha, a.hora, a.estado "
                    + "FROM asistencias a "
