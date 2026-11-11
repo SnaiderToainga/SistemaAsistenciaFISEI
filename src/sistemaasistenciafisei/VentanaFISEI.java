@@ -106,7 +106,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 // Si el usuario presiona Esc mientras edita, cancela y vuelve al modo normal
                 if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE && metodos.estaEditando()) {
-                    metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula);
+                    metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula,
+                            jchkComputacionVisual, jchkMetodologiasAgiles);
                     jtblEstudiantes.clearSelection();
                     botonesModoNuevo();
                 }
@@ -154,6 +155,9 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jchkComputacionVisual = new javax.swing.JCheckBox();
+        jchkMetodologiasAgiles = new javax.swing.JCheckBox();
         jbtnNuevoEstudiante = new javax.swing.JButton();
         jbtnGuardarEstudiante = new javax.swing.JButton();
         jbtnEliminarEstudiante = new javax.swing.JButton();
@@ -208,6 +212,12 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jLabel3.setText("Apellidos:");
 
         jLabel4.setText("Id_Matricula");
+
+        jLabel9.setText("Materias:");
+
+        jchkComputacionVisual.setText("Computación Visual");
+
+        jchkMetodologiasAgiles.setText("Metodologías Ágiles");
 
         jbtnNuevoEstudiante.setText("Nuevo");
         jbtnNuevoEstudiante.addActionListener(new java.awt.event.ActionListener() {
@@ -271,13 +281,18 @@ public class VentanaFISEI extends javax.swing.JFrame {
                                 .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 57, Short.MAX_VALUE))
-                            .addComponent(jLabel4))
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel9))
                         .addGap(4, 4, 4)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jtxtRfidMatricula)
                             .addComponent(jtxtNombre)
                             .addComponent(jtxtApellidos)
-                            .addComponent(jtxtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jtxtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jchkComputacionVisual)
+                                .addGap(12, 12, 12)
+                                .addComponent(jchkMetodologiasAgiles)))
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(76, 76, 76)
@@ -317,8 +332,13 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addComponent(jtxtRfidMatricula, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jbtnModificarEstudiante))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel9)
+                    .addComponent(jchkComputacionVisual)
+                    .addComponent(jchkMetodologiasAgiles))
                 .addGap(24, 24, 24)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 406, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -530,7 +550,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jbtnCerrarSesionActionPerformed
 
     private void jbtnEliminarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnEliminarEstudianteActionPerformed
-        if (metodos.eliminar(jtblEstudiantes, jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula)) {
+        if (metodos.eliminar(jtblEstudiantes, jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula,
+                jchkComputacionVisual, jchkMetodologiasAgiles)) {
             botonesModoNuevo();
         }
     }//GEN-LAST:event_jbtnEliminarEstudianteActionPerformed
@@ -552,26 +573,30 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }
 
     private void jbtnNuevoEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnNuevoEstudianteActionPerformed
-        metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula);
+        metodos.limpiarCampos(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula,
+                jchkComputacionVisual, jchkMetodologiasAgiles);
         jtblEstudiantes.clearSelection();
         botonesModoNuevo();
     }//GEN-LAST:event_jbtnNuevoEstudianteActionPerformed
 
     private void jbtnGuardarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnGuardarEstudianteActionPerformed
-        if (metodos.guardar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes)) {
+        if (metodos.guardar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula,
+                jchkComputacionVisual, jchkMetodologiasAgiles, jtblEstudiantes)) {
             botonesModoNuevo();
         }
     }//GEN-LAST:event_jbtnGuardarEstudianteActionPerformed
 
     private void jbtnModificarEstudianteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jbtnModificarEstudianteActionPerformed
-        if (metodos.modificar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula, jtblEstudiantes)) {
+        if (metodos.modificar(jtxtCedula, jtxtNombre, jtxtApellidos, jtxtRfidMatricula,
+                jchkComputacionVisual, jchkMetodologiasAgiles, jtblEstudiantes)) {
             botonesModoNuevo();
         }
     }//GEN-LAST:event_jbtnModificarEstudianteActionPerformed
 
     private void jtxtRfidMatriculaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jtxtRfidMatriculaActionPerformed
         boolean yaEstabaEditando = metodos.estaEditando();
-        metodos.detectarRfid(jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
+        metodos.detectarRfid(jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos,
+                jchkComputacionVisual, jchkMetodologiasAgiles);
         if (yaEstabaEditando) {
             botonesModoEditando();
         } else if (metodos.estaEditando()) {
@@ -580,7 +605,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
     }//GEN-LAST:event_jtxtRfidMatriculaActionPerformed
 
     private void jtblEstudiantesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jtblEstudiantesMouseClicked
-        metodos.seleccionarFila(jtblEstudiantes, jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos);
+        metodos.seleccionarFila(jtblEstudiantes, jtxtRfidMatricula, jtxtCedula, jtxtNombre, jtxtApellidos,
+                jchkComputacionVisual, jchkMetodologiasAgiles);
         if (metodos.estaEditando()) {
             botonesModoSeleccionado();
         }
@@ -682,6 +708,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -702,6 +729,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jcbxParcial;
     private javax.swing.JComboBox<String> jcbxParcialReporte;
     private javax.swing.JComboBox<String> jcbxSesion;
+    private javax.swing.JCheckBox jchkComputacionVisual;
+    private javax.swing.JCheckBox jchkMetodologiasAgiles;
     private javax.swing.JLabel jlblMensajeAsistencia;
     private javax.swing.JTable jtblEstudiantes;
     private javax.swing.JTable jtblMarcacionesSesion;

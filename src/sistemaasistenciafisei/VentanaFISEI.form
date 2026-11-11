@@ -96,6 +96,7 @@
                                       <Component id="jLabel3" alignment="0" pref="57" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -103,6 +104,11 @@
                                   <Component id="jtxtNombre" max="32767" attributes="0"/>
                                   <Component id="jtxtApellidos" alignment="0" max="32767" attributes="0"/>
                                   <Component id="jtxtCedula" alignment="0" min="-2" pref="169" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jchkComputacionVisual" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                                      <Component id="jchkMetodologiasAgiles" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="0" attributes="0">
@@ -156,8 +162,14 @@
                           <Component id="jtxtRfidMatricula" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jbtnModificarEstudiante" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jchkComputacionVisual" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jchkMetodologiasAgiles" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" pref="406" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="356" max="32767" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -193,6 +205,21 @@
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Id_Matricula"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel9">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Materias:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jchkComputacionVisual">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Computación Visual"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="jchkMetodologiasAgiles">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Metodologías Ágiles"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="jbtnNuevoEstudiante">
