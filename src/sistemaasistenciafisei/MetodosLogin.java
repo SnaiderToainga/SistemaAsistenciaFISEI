@@ -25,8 +25,12 @@ public class MetodosLogin {
     private SwingWorker<UsuarioAutenticado, Void> tareaIngreso;
 
     private UsuarioAutenticado autenticar(String usuario, String clave) throws SQLException {
-        String sql = "SELECT nombre_completo, perfil FROM usuarios "
-                + "WHERE usuario = ? AND clave = ?";
+        String sql = "SELECT u.nombre_completo, u.perfil, "
+                   + "       COALESCE(m.id, 0) AS id_materia, m.nombre AS nombre_materia "
+                   + "FROM usuarios u "
+                   + "LEFT JOIN materias m ON u.id = m.id_docente "
+                   + "WHERE u.usuario = ? AND u.clave = ? "
+                   + "ORDER BY m.id ASC LIMIT 1";
 
         try (Connection cn = new Conexion().conectar()) {
             if (cn == null) {
@@ -45,7 +49,9 @@ public class MetodosLogin {
 
                     String nombre = rs.getString("nombre_completo");
                     String perfil = rs.getString("perfil");
-                    return new UsuarioAutenticado(nombre, perfil);
+                    int idMateria = rs.getInt("id_materia");
+                    String nombreMateria = rs.getString("nombre_materia");
+                    return new UsuarioAutenticado(nombre, perfil, idMateria, nombreMateria);
                 }
             }
         }
@@ -126,12 +132,15 @@ public class MetodosLogin {
             return;
         }
 
+        String curso = (usuario.nombreMateria() != null && !usuario.nombreMateria().isBlank())
+                ? "\nMateria: " + usuario.nombreMateria()
+                : "";
         JOptionPane.showMessageDialog(ventanaLogin,
-                "Bienvenido " + usuario.nombre() + "\nPerfil: " + usuario.perfil(),
+                "Bienvenido " + usuario.nombre() + "\nPerfil: " + usuario.perfil() + curso,
                 "Acceso correcto", JOptionPane.INFORMATION_MESSAGE);
 
         if (ventanaLogin.isDisplayable()) {
-            new VentanaFISEI(usuario.perfil()).setVisible(true);
+            new VentanaFISEI(usuario.perfil(), usuario.idMateria(), usuario.nombreMateria()).setVisible(true);
             ventanaLogin.dispose();
         }
     }
@@ -188,6 +197,6 @@ public class MetodosLogin {
         ventanaLogin.dispose();
     }
 
-    private record UsuarioAutenticado(String nombre, String perfil) {
+    private record UsuarioAutenticado(String nombre, String perfil, int idMateria, String nombreMateria) {
     }
 }

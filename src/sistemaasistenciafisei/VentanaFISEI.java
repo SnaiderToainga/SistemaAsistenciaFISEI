@@ -18,13 +18,17 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private int sesionesParcial2 = 5;
 
     public VentanaFISEI() {
-        this("Administrador"); // Entra por defecto con todos los permisos
+        this("Administrador", 0, null); // Entra por defecto con todos los permisos
     }
-    
+
+    public VentanaFISEI(String rol) {
+        this(rol, 0, null);
+    }
+
     /**
      * Creates new form VentanaFISEI
      */
-    public VentanaFISEI(String rol) {
+    public VentanaFISEI(String rol, int idMateriaDocente, String nombreMateria) {
         initComponents();
         this.setLocationRelativeTo(null);
         sesionesParcial1 = metodosReporte.obtenerSesionesRegistradas("Parcial 1");
@@ -35,7 +39,11 @@ public class VentanaFISEI extends javax.swing.JFrame {
         metodosReporte.calcularConsolidado("Parcial 1", getTotalSesiones("Parcial 1"), jtblReporteFinal);
         botonesModoNuevo();
         configurarEventosExtra();
-        aplicarPermisosPorRol(rol);
+        aplicarPermisosPorRol(rol, idMateriaDocente, nombreMateria);
+    }
+
+    private int getIdMateriaSeleccionada(javax.swing.JComboBox<String> combo) {
+        return "Metodologías Ágiles".equals(combo.getSelectedItem()) ? 2 : 1;
     }
 
     private int getTotalSesiones(String parcial) {
@@ -54,17 +62,26 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jcbxSesion.setModel(modelo);
     }
     
-    private void aplicarPermisosPorRol(String rol) {
+    private void aplicarPermisosPorRol(String rol, int idMateriaDocente, String nombreMateria) {
         if ("Docente".equalsIgnoreCase(rol)) {
             // El Docente no tiene acceso a matricular ni eliminar estudiantes
-            jTabbedPane1.setEnabledAt(0, false); 
+            jTabbedPane1.setEnabledAt(0, false);
+            int indiceMateria = (idMateriaDocente == 2) ? 1 : 0;
+            jcbxMateriaAsistencia.setSelectedIndex(indiceMateria);
+            jcbxMateriaReporte.setSelectedIndex(indiceMateria);
+            jcbxMateriaAsistencia.setEnabled(false);
+            jcbxMateriaReporte.setEnabled(false);
+
             // Lo manda directo a la pestaña de pasar asistencia con el llavero RFID
             jTabbedPane1.setSelectedIndex(1);
             jtxtLectorRfid.requestFocusInWindow();
-            this.setTitle("Sistema Asistencia FISEI - [Perfil: Docente]");
+            String curso = (nombreMateria != null && !nombreMateria.isBlank()) ? " - " + nombreMateria : "";
+            this.setTitle("Sistema Asistencia FISEI - [Perfil: Docente" + curso + "]");
         } else {
-            // Administrador: acceso total a las 3 pestañas
+            // Administrador: acceso total a las 3 pestañas y ambas materias
             jTabbedPane1.setEnabledAt(0, true);
+            jcbxMateriaAsistencia.setEnabled(true);
+            jcbxMateriaReporte.setEnabled(true);
             jTabbedPane1.setSelectedIndex(0);
             this.setTitle("Sistema Asistencia FISEI - [Perfil: Administrador]");
         }
@@ -165,6 +182,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         jtblEstudiantes = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
+        jLabel10 = new javax.swing.JLabel();
+        jcbxMateriaAsistencia = new javax.swing.JComboBox<>();
         jcbxParcial = new javax.swing.JComboBox<>();
         jcbxSesion = new javax.swing.JComboBox<>();
         jbtnAgregarSesion = new javax.swing.JButton();
@@ -176,6 +195,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
         jtblMarcacionesSesion = new javax.swing.JTable();
         jlblMensajeAsistencia = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
+        jLabel11 = new javax.swing.JLabel();
+        jcbxMateriaReporte = new javax.swing.JComboBox<>();
         jcbxParcialReporte = new javax.swing.JComboBox<>();
         jLabel8 = new javax.swing.JLabel();
         jbtnCalcularReporte = new javax.swing.JButton();
@@ -303,11 +324,11 @@ public class VentanaFISEI extends javax.swing.JFrame {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(77, 77, 77)
                                 .addComponent(jbtnNuevoEstudiante, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addGap(215, 215, 215))
+                .addGap(26, 26, 26))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(26, 26, 26)
                 .addComponent(jScrollPane2)
-                .addGap(108, 108, 108))
+                .addGap(26, 26, 26))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -343,6 +364,10 @@ public class VentanaFISEI extends javax.swing.JFrame {
         );
 
         jTabbedPane1.addTab("Matriculacion", jPanel1);
+
+        jLabel10.setText("Seleccione Materia");
+
+        jcbxMateriaAsistencia.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computación Visual", "Metodologías Ágiles" }));
 
         jcbxParcial.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Parcial 1", "Parcial 2" }));
         jcbxParcial.addActionListener(new java.awt.event.ActionListener() {
@@ -401,29 +426,35 @@ public class VentanaFISEI extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jcbxMateriaAsistencia, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jcbxSesion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jbtnAgregarSesion))
                             .addComponent(jcbxParcial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jlblMensajeAsistencia, javax.swing.GroupLayout.DEFAULT_SIZE, 482, Short.MAX_VALUE)
+                        .addComponent(jlblMensajeAsistencia, javax.swing.GroupLayout.DEFAULT_SIZE, 592, Short.MAX_VALUE)
                         .addGap(38, 38, 38))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jtxtLectorRfid, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
-                        .addGap(190, 190, 190)))
+                        .addGap(300, 300, 300)))
                 .addGap(15, 15, 15))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(14, 14, 14)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jcbxMateriaAsistencia, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel10))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jcbxParcial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6))
@@ -432,17 +463,21 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     .addComponent(jcbxSesion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel7)
                     .addComponent(jbtnAgregarSesion))
-                .addGap(32, 32, 32)
+                .addGap(24, 24, 24)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jtxtLectorRfid, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jlblMensajeAsistencia)
-                .addGap(32, 32, 32)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE))
+                .addGap(24, 24, 24)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Asistencia RFID", jPanel2);
+
+        jLabel11.setText("Seleccione la materia");
+
+        jcbxMateriaReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Computación Visual", "Metodologías Ágiles" }));
 
         jcbxParcialReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Parcial 1", "Parcial 2" }));
         jcbxParcialReporte.addActionListener(new java.awt.event.ActionListener() {
@@ -487,12 +522,16 @@ public class VentanaFISEI extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(15, 15, 15)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addGroup(jPanel3Layout.createSequentialGroup()
                             .addComponent(jbtnCalcularReporte)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jbtnImprimirJasper))
+                        .addGroup(jPanel3Layout.createSequentialGroup()
+                            .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(jcbxMateriaReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(jPanel3Layout.createSequentialGroup()
                             .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -504,6 +543,10 @@ public class VentanaFISEI extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jcbxMateriaReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jcbxParcialReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -511,8 +554,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
                     .addComponent(jbtnCalcularReporte)
                     .addComponent(jbtnImprimirJasper))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 413, Short.MAX_VALUE)
-                .addGap(96, 96, 96))
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
+                .addGap(15, 15, 15))
         );
 
         jTabbedPane1.addTab("Reporte y Estado", jPanel3);
@@ -528,7 +571,7 @@ public class VentanaFISEI extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 550, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 660, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jbtnCerrarSesion)
                 .addContainerGap())
@@ -701,6 +744,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -726,6 +771,8 @@ public class VentanaFISEI extends javax.swing.JFrame {
     private javax.swing.JButton jbtnImprimirJasper;
     private javax.swing.JButton jbtnModificarEstudiante;
     private javax.swing.JButton jbtnNuevoEstudiante;
+    private javax.swing.JComboBox<String> jcbxMateriaAsistencia;
+    private javax.swing.JComboBox<String> jcbxMateriaReporte;
     private javax.swing.JComboBox<String> jcbxParcial;
     private javax.swing.JComboBox<String> jcbxParcialReporte;
     private javax.swing.JComboBox<String> jcbxSesion;
